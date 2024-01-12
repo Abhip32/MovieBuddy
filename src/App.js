@@ -6,6 +6,7 @@ import Navbar from './Components/Common/Navbar';
 import Footer from './Components/Common/Footer';
 import Movies from './pages/movies';
 import Series from './pages/series';
+import Streaming from './pages/streaming';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/:mediaType/:id" element={<SinglePage />} />
           <Route path="/movies" element={<Movies/>}/>
           <Route path="/series" element={<Series/>} />
+          <Route path="/streaming/:type/:id" element={<Streaming/>} />
         </Routes>
         <Footer/>
       </Router>

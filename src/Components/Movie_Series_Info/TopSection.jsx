@@ -22,6 +22,7 @@ import Gallery from "./Carousel";
 
 
 const TopSection = ({content,isOpen,video,mediaType,setOpen,season}) => {
+    const navigate=useNavigate();
   return (
     <Flex
                               
@@ -192,7 +193,7 @@ const TopSection = ({content,isOpen,video,mediaType,setOpen,season}) => {
 
                                                 {mediaType === 'movie' && (
                                                     <a
-                                                        href={`https://multiembed.mov/?video_id=${content.imdb_id}`}
+                                                        onClick={()=>navigate(`/streaming/movie/${content.imdb_id}`)}
                                                       
                                                     >
                                                         <Flex alignItems={'center'} justifyContent={'center'} w={'150px'} padding={'6px'} bgGradient={'linear(90deg, #800080, #CF9FFF)'} borderRadius={'20px'}>
@@ -204,7 +205,7 @@ const TopSection = ({content,isOpen,video,mediaType,setOpen,season}) => {
 
                                                 {mediaType === 'tv' && (
                                                     <a
-                                                        href={`https://multiembed.mov/?video_id=${content.externalIds.imdb_id}&s=${season}&e=1`}
+                                                        onClick={()=>navigate(`/streaming/tv/${content.id}`)}
                                                        
                                                     >
                                                        <Flex alignItems={'center'} justifyContent={'center'} w={'150px'} padding={'6px'} bgGradient={'linear(90deg, #800080, #CF9FFF)'} borderRadius={'20px'}>
