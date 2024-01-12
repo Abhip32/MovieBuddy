@@ -12,6 +12,7 @@ import {
     TabPanels,
     TabPanel,
     Tabs,
+    Skeleton,
 } from "@chakra-ui/react";
 import { AiFillPlayCircle } from "react-icons/ai";
 import { img_300, img_500, unavailable } from "../../api/config/DefaultImages";
@@ -221,21 +222,13 @@ const SinglePage = () => {
             ) : (
                 <Box
                     className="load_app"
-                    height="500px"
+                    minheight="100vh"
                     display="flex"
                     flexDirection="column"
                     alignItems="center"
                     justifyContent="center"
                 >
-                    Loading
-                    <Text
-                        paddingTop="4"
-                        fontSize="1rem"
-                        color="#d7eef5"
-                        textTransform="capitalize"
-                    >
-                        Loading Please Wait...
-                    </Text>
+                    <Skeleton minH='100vh'/>
                 </Box>
             )}
         </>

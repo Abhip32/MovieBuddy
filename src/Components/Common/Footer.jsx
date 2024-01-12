@@ -1,5 +1,6 @@
 import React from 'react'
-import { Flex,chakra,Icon } from '@chakra-ui/react'
+import { Flex,chakra,Icon,Image } from '@chakra-ui/react'
+import Logo from '../../Assets/logo.png'
 
 const Footer = () => {
   return (
@@ -36,7 +37,7 @@ const Footer = () => {
         color: "gray.700",
       }}
     >
-      Brand
+      <Image src={Logo} width={'150px'}/>
     </chakra.a>
 
 

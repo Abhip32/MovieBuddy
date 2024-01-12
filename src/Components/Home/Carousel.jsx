@@ -32,6 +32,7 @@ const Carousel = () => {
       const red = filter.reverse();
 
       setAllContent(red);
+      console.log(red);
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -96,6 +97,10 @@ const Carousel = () => {
           <AiFillPlayCircle size={'6vh'} cursor="pointer" onClick={() => navigate(`/${item.mediaType || item.media_type}/${item.id}`)} />
           <AiFillPlusCircle size={'6vh'} cursor="pointer" />
           &nbsp;{Math.round(item.vote_average * 10) / 10}
+           <Text> {(
+                                            item?.first_air_date ||
+                                            item?.release_date 
+                                        ).substring(0, 4)}{" "}&nbsp;</Text>
         </Box>
       </Box>
     </Box>
