@@ -121,7 +121,7 @@ const Home = () => {
 
       <Box  marginTop={'-20px'} paddingLeft={'5vw'} paddingRight={'5vw'}  bgGradient='linear(to-b,  #451488 70%,#16072b ,)' paddingBottom={'20px'}>
 
-      <Box padding={'50px'}>
+      <Box paddingTop={'50px'}>
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >Movies On Air</Text>
         <br/>
         <Slider {...carouselSettings}>
@@ -132,7 +132,7 @@ const Home = () => {
         </Slider>
       </Box>
 
-      <Box padding={'50px'}>
+      <Box paddingTop={'50px'}>
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >TV Series On Air</Text>
         <br/>
         <Slider {...carouselSettings}>
@@ -144,7 +144,7 @@ const Home = () => {
       </Box>
 
 
-      <Box padding={'50px'}>
+      <Box paddingTop={'50px'}>
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >Top Rated Movies</Text>
         <br/>
         <Slider {...carouselSettings}>
@@ -155,7 +155,7 @@ const Home = () => {
         </Slider>
       </Box>
 
-      <Box padding={'50px'}>
+      <Box paddingTop={'50px'}>
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >Top Rated TV Series</Text>
         <br/>
         <Slider {...carouselSettings}>

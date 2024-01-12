@@ -52,7 +52,8 @@ const SingleData = ({
       position="relative"
       margin={"0px 20px"}
       _hover={{
-        transform: "scale(1.05)",
+        transform: "scale(1.02)",
+        boxShadow: '1px 1px 20px white',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
