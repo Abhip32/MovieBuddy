@@ -1,0 +1,25 @@
+.carousel__d {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  object-fit: contain;
+  padding: 10px;
+  position: relative;
+}
+.caro_img {
+  height: 300px;
+  width: 200px;
+  margin-bottom: 5px;
+  object-fit: cover;
+  cursor: pointer;
+}
+.caro_img:hover {
+  transform: scale(0.96);
+}
+.caro__details h6 {
+  font-size: 13px;
+}
+.character {
+  color: #888b8d;
+}
