@@ -38,7 +38,7 @@ const Movies = () => {
     }
   };
 
-  const fetchSearchApi = async () => {
+  const fetchSearchApi = async (searchTerm,page) => {
     if (searchTerm) {
       const SEARCH_API = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.REACT_APP_API_KEY}&query=${searchTerm}&page=${page}&sort_by=popularity.desc&page=1`;
       const { data } = await axios.get(SEARCH_API);
@@ -126,6 +126,8 @@ const Movies = () => {
         setPage={setPage}
         numOfPages={numOfPages}
         fetchMovieApi={fetchMovieApi}
+        fetchSearchApi={fetchSearchApi}
+        searchTerm={searchTerm}
         selectedGenre={selectedGenre}
         setTreadingContent={setTreadingContent}
       />

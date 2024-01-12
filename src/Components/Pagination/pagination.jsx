@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import { chakra, Flex, Icon,Button } from "@chakra-ui/react";
+import { chakra, Flex, Icon, Button } from "@chakra-ui/react";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 
-const Pagination = ({ page,numOfPages, setPage, fetchMovieApi, selectedGenre }) => {
-  const totalPages = numOfPages; // Assuming there are 100 pages in total
-  const visiblePages = 5;
-  const [startPage,setStartPage]=useState(1);
-
-  const PagButton = (props) => {
+const Pagination = ({ page, numOfPages, setPage, fetchMovieApi, fetchSearchApi,searchTerm, selectedGenre }) => {
+ const [startPage, setStartPage] = useState(1);
+ const PagButton = (props) => {
     const activeStyle = {
       bg: "brand.600",
       _dark: { bg: "brand.500" },
@@ -16,7 +13,16 @@ const Pagination = ({ page,numOfPages, setPage, fetchMovieApi, selectedGenre }) 
 
     const handlePageChange = (pageN) => {
       setPage(pageN);
-      fetchMovieApi(selectedGenre, pageN);
+      if(searchTerm !== '')
+      {
+        console.log(searchTerm,pageN);
+        fetchSearchApi(searchTerm,pageN)
+      }
+      else
+      {
+        console.log(selectedGenre,pageN);
+        fetchMovieApi(selectedGenre, pageN);
+      }
     };
 
     return (
@@ -37,23 +43,36 @@ const Pagination = ({ page,numOfPages, setPage, fetchMovieApi, selectedGenre }) 
         {props.children}
       </chakra.button>
     );
-  };
+ };
 
-  const renderPageButtons = () => {
+ const renderPageButtons = () => {
     const buttons = [];
 
-    for (let i = startPage; i < startPage+5; i++) {
+   if(numOfPages <10)
+   {
+    for (let i = startPage; i < numOfPages; i++) {
       buttons.push(
         <PagButton key={i} p active={i === page}>
           {i}
         </PagButton>
       );
     }
+   }
+   else
+   {
+    for (let i = startPage; i < startPage + 9; i++) {
+      buttons.push(
+        <PagButton key={i} p active={i === page}>
+          {i}
+        </PagButton>
+      );
+    }
+   }
 
     return buttons;
-  };
+ };
 
-  return (
+ return (
     <Flex
       bg='transparent'
       p={20}
@@ -62,7 +81,7 @@ const Pagination = ({ page,numOfPages, setPage, fetchMovieApi, selectedGenre }) 
       justifyContent="center"
     >
       <Flex>
-        <Button onClick={() => startPage>=2&&setStartPage(startPage-1)}>
+        <Button onClick={() => startPage >= 2 && setStartPage(startPage - 1)}>
           <Icon
             as={IoIosArrowBack}
             color="gray.700"
@@ -71,7 +90,7 @@ const Pagination = ({ page,numOfPages, setPage, fetchMovieApi, selectedGenre }) 
           />
         </Button>
         {renderPageButtons()}
-        <Button onClick={() => startPage<=99&&setStartPage(startPage+1)}>
+        <Button onClick={() => startPage <= numOfPages - 10 && setStartPage(startPage + 1)}>
           <Icon
             as={IoIosArrowForward}
             color="gray.700"
@@ -81,7 +100,7 @@ const Pagination = ({ page,numOfPages, setPage, fetchMovieApi, selectedGenre }) 
         </Button>
       </Flex>
     </Flex>
-  );
+ );
 };
 
 export default Pagination;

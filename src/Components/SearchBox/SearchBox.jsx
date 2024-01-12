@@ -6,7 +6,7 @@ const SearchBox = ({ placeholder, searchTerm, setSearchTerm, fetchSearchApi }) =
     e.preventDefault(); // Prevents the form from submitting the traditional way
 
     // Call your fetchSearchApi function here
-    fetchSearchApi();
+    fetchSearchApi(searchTerm,1);
   };
 
   return (
