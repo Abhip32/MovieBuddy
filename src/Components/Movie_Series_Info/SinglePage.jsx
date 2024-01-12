@@ -168,7 +168,7 @@ const SinglePage = () => {
                                             <Flex bgGradient="linear(to-l, purple 1%, transparent 90%)" overflowX="auto" sx={{ '::-webkit-scrollbar': { width: '0.5em', }, '::-webkit-scrollbar-thumb': { backgroundColor: 'transparent', }, }}>
                                                 {Array.from({ length: season.episode_count }, (_, index) => (
                                                     <a
-                                                        href={`https://multiembed.mov/?video_id=${content.externalIds.imdb_id}&s=${season.season_number}&e=${index + 1}`}
+                                                        onClick={()=>navigate(`/streaming/tv/${content.id}/${season.season_number}/${index + 1}`)}
                                                     >
                                                         <Box marginRight="10px" display={'flex'} alignItems={'center'} flexDirection={'column'}>
                                                             <Image

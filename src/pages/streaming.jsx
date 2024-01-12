@@ -4,12 +4,12 @@ import { AspectRatio, Box, Select,Text } from '@chakra-ui/react';
 import axios from 'axios';
 
 const Streaming = () => {
-  const { type, id } = useParams();
+  const { type, id,season,episode } = useParams();
   const [src, setSrc] = useState('');
   const [content, setContent] = useState({});
   const [isLoading, setIsLoading] = useState(false); // Fix: Initialize as false
-  const [selectedSeason, setSelectedSeason] = useState('1');
-  const [selectedEpisode, setSelectedEpisode] = useState('1');
+  const [selectedSeason, setSelectedSeason] = useState(season||'1');
+  const [selectedEpisode, setSelectedEpisode] = useState(episode||'1');
 
   const fetchContent = async () => {
     try {

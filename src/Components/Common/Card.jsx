@@ -79,6 +79,7 @@ const SingleData = ({
             maxH={"40px"}
             overflow={'hidden'}
             whiteSpace={'nowrap'}
+            bg={'black'}
             textOverflow={'ellipsis'}
             padding={"10px"}
             textAlign={"center"}

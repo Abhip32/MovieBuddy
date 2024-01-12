@@ -19,6 +19,7 @@ function App() {
           <Route path="/movies" element={<Movies/>}/>
           <Route path="/series" element={<Series/>} />
           <Route path="/streaming/:type/:id" element={<Streaming/>} />
+          <Route path="/streaming/:type/:id/:season/:episode" element={<Streaming/>} />
         </Routes>
         <Footer/>
       </Router>
