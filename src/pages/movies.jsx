@@ -71,7 +71,7 @@ const Movies = () => {
 
   return (
     <Box minH={'100vh'} bgGradient={'linear(to-b,#451488,#16072b)'}>
-      <Box bgColor={'#451488'} pt={'100px'}>
+      <Box bgColor={'#451488'} pt={'100px'} pb={'100px'}>
         <SearchBox placeholder='search movies..' searchTerm={searchTerm} setSearchTerm={setSearchTerm} fetchSearchApi={fetchSearchApi}/>
 
         <HStack
@@ -88,6 +88,7 @@ const Movies = () => {
         >
           {getGener.map((genre) => (
             <Box
+            cursor={'pointer'}
               fontWeight={'bolder'}
               margin={'2px'}
               minW={'130px'}
@@ -101,6 +102,7 @@ const Movies = () => {
                       paddingBottom: '5px',
                       fontWeight: 'bolder',
                       fontSize: '20px',
+                      borderRadius:'100px',
                       background:
                         'linear-gradient(to top,violet 1%,transparent,transparent,transparent)',
                     }
@@ -112,7 +114,7 @@ const Movies = () => {
           ))}
         </HStack>
         
-        <SimpleGrid columns={[1, 2, 3, 4]} spacing={4} mt={8}>
+        <SimpleGrid columns={[2, 2, 3, 4]} spacing={4} mt={8} paddingLeft={'5vw'} paddingRight={'5vw'}>
           {treadingContent &&
             treadingContent.map((n) => (
               <SingleData key={n.id} {...n} mediaType="movie" />

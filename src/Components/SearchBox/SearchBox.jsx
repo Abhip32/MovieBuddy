@@ -1,8 +1,15 @@
 import React from "react";
 import { chakra, Flex, Input, Button } from "@chakra-ui/react";
 
-const SearchBox = ({ placeholder,searchTerm, setSearchTerm, fetchSearchApi }) => {
- return (
+const SearchBox = ({ placeholder, searchTerm, setSearchTerm, fetchSearchApi }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevents the form from submitting the traditional way
+
+    // Call your fetchSearchApi function here
+    fetchSearchApi();
+  };
+
+  return (
     <chakra.form
       w="full"
       maxW="600px"
@@ -12,6 +19,7 @@ const SearchBox = ({ placeholder,searchTerm, setSearchTerm, fetchSearchApi }) =>
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
+      onSubmit={handleSubmit} // Bind the handleSubmit function to the form's onSubmit event
     >
       <Flex
         w="full"
@@ -37,7 +45,7 @@ const SearchBox = ({ placeholder,searchTerm, setSearchTerm, fetchSearchApi }) =>
           _placeholder={{ color: "gray.400" }}
         />
         <Button
-          onClick={fetchSearchApi}
+          type="submit" // Add type="submit" to the button to enable Enter key submission
           colorScheme="purple"
           ml={3}
         >
@@ -45,7 +53,7 @@ const SearchBox = ({ placeholder,searchTerm, setSearchTerm, fetchSearchApi }) =>
         </Button>
       </Flex>
     </chakra.form>
- );
+  );
 };
 
 export default SearchBox;

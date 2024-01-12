@@ -77,9 +77,10 @@ const SingleData = ({
           <Text
             fontSize={"small"}
             maxH={"40px"}
-            noOfLines={2}
+            overflow={'hidden'}
+            whiteSpace={'nowrap'}
+            textOverflow={'ellipsis'}
             padding={"10px"}
-            background={"black"}
             textAlign={"center"}
             width={"100%"}
           >

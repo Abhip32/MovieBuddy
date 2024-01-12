@@ -80,7 +80,7 @@ const Series = () => {
 
   return (
     <Box minH={'100vh'} bgGradient={'linear(to-b,#451488,#16072b)'}>
-      <Box bgColor={'#451488'} paddingLeft={'10px'} paddingRight={'10px'} pt={'100px'}>
+      <Box bgColor={'#451488'} paddingLeft={'10px'} paddingRight={'10px'} pt={'100px'}  pb={'100px'}>
       <SearchBox placeholder='search series..' searchTerm={searchTerm} setSearchTerm={setSearchTerm} fetchSearchApi={fetchSearchApi}/>
         <HStack
           color={' #D3D3D3'}
@@ -96,19 +96,20 @@ const Series = () => {
         >
           {getGener.map((genre) => (
             <Box
+              cursor={'pointer'}
               fontWeight={'bolder'}
               margin={'2px'}
               minW={'150px'}
               textAlign={'center'}
               key={genre.id}
               onClick={() => handleTabClick(genre.id)}
-              style={genre.id === selectedGenre ? { color: 'white', paddingBottom:'5px', fontWeight:'bolder',fontSize:'20px', background:'linear-gradient(to top,violet 1%,transparent,transparent,transparent)'} : { color: '#D3D3D3' }}>
+              style={genre.id === selectedGenre ? { color: 'white', paddingBottom:'5px', fontWeight:'bolder',fontSize:'20px', background:'linear-gradient(to top,violet 1%,transparent,transparent,transparent)', borderRadius:'100px',} : { color: '#D3D3D3' }}>
               {genre.name}
             </Box>
           ))}
           </HStack>
           <Box>
-          <SimpleGrid columns={[1, 2, 3, 4]} spacing={4} mt={8}>
+          <SimpleGrid columns={[2, 2, 3, 4]} spacing={4} mt={8}  paddingLeft={'5vw'} paddingRight={'5vw'}>
         {/* Use SimpleGrid to create a responsive grid */}
         {treadingContent &&
           treadingContent.map((n) => (
