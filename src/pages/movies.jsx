@@ -40,7 +40,7 @@ const Movies = () => {
 
   const fetchSearchApi = async (searchTerm,page) => {
     if (searchTerm) {
-      const SEARCH_API = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.REACT_APP_API_KEY}&query=${searchTerm}&page=${page}&sort_by=popularity.desc&page=1`;
+      const SEARCH_API = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.REACT_APP_API_KEY}&query=${searchTerm}&sort_by=popularity.desc&page=${page}`;
       const { data } = await axios.get(SEARCH_API);
       setTreadingContent(data.results);
       setNumOfPages(data.total_pages);

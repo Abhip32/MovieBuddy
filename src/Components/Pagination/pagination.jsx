@@ -50,7 +50,7 @@ const Pagination = ({ page, numOfPages, setPage, fetchMovieApi, fetchSearchApi,s
 
    if(numOfPages <10)
    {
-    for (let i = startPage; i < numOfPages; i++) {
+    for (let i = startPage; i <= numOfPages; i++) {
       buttons.push(
         <PagButton key={i} p active={i === page}>
           {i}
