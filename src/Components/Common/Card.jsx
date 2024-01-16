@@ -10,7 +10,6 @@ import {
   Skeleton,
   SkeletonText,
 } from "@chakra-ui/react";
-import { IoPlayCircleOutline } from "react-icons/io5";
 import { AiFillPlayCircle } from "react-icons/ai";
 
 const SingleData = ({
@@ -62,14 +61,14 @@ const SingleData = ({
       <Box style={{ position: "relative" }}>
         <Image
           src={poster_path ? `${img_300}/${poster_path}` : unavailable}
-          alt=""
+          alt="poster"
           style={{ position: "relative", width: "100%", height: "auto" }}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageLoaded(true)} // Handle error (e.g., image not found)
         />
         {!imageLoaded && (
           <Box>
-          <Skeleton height={'400px'}/>
+          <Skeleton height={{base:'200px',md:'400px'}}/>
             <SkeletonText mt='4' noOfLines={1}  skeletonHeight='2' />
             </Box>
         )}

@@ -61,7 +61,7 @@ const Streaming = () => {
   };
 
   return (
-    <Box padding={'100px'} minH={'100vh'} bg={'black'} >
+    <Box padding={'10vw'} minH={'100vh'} bg={'black'} >
       {content && (
         <Box mb={4} >
         <Text fontSize={{ base: 'md', md: 'xl' }} color={'white'} mt={5} mb={5}>
