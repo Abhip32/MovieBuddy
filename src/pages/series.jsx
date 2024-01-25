@@ -109,7 +109,7 @@ const Series = () => {
           ))}
           </HStack>
           <Box>
-          <SimpleGrid columns={[2, 2, 3, 4]} spacing={4} mt={8}  paddingLeft={'5vw'} paddingRight={'5vw'}>
+          <SimpleGrid columns={[2, 2, 3, 5]} spacing={4} mt={8}  paddingLeft={'5vw'} paddingRight={'5vw'}>
         {/* Use SimpleGrid to create a responsive grid */}
         {treadingContent &&
           treadingContent.map((n) => (

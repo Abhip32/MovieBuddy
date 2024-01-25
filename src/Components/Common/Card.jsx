@@ -33,7 +33,7 @@ const SingleData = ({
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const getBadgeColor = (voteAverage) => {
-    if (voteAverage > 8) {
+    if (voteAverage > 7) {
       return "green";
     } else if (voteAverage >= 5 && voteAverage <= 7) {
       return "yellow";
