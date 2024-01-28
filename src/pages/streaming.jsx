@@ -60,6 +60,11 @@ const Streaming = () => {
     setSelectedEpisode(e.target.value);
   };
 
+  if(content)
+  {
+    document.title=content?.name || content?.title;
+  }
+
   return (
     <Box padding={'10vw'} minH={'100vh'} bg={'black'} >
       {content && (

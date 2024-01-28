@@ -68,7 +68,7 @@ const Series = () => {
         <SimpleGrid columns={[2, 2, 3, 5]} spacing={4} mt={8} paddingLeft={'5vw'} paddingRight={'5vw'}>
           {treadingContent &&
             treadingContent.map((n) => (
-              <SingleData key={n.id} {...n} mediaType="movie" />
+              <SingleData key={n.id} {...n} mediaType="tv" />
             ))}
         </SimpleGrid>
       </Box>
