@@ -49,7 +49,7 @@ const SingleData = ({
       onClick={handleClick}
       cursor="pointer"
       position="relative"
-      margin={"0px 20px"}
+      margin={"0px 5px"}
       _hover={{
         transform: "scale(1.02)",
         boxShadow: '1px 1px 20px white',

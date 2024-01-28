@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, HStack, SimpleGrid } from '@chakra-ui/react';
+import { Box,SimpleGrid} from '@chakra-ui/react';
 import axios from 'axios';
 import SingleData from '../Components/Common/Card';
 import Pagination from '../Components/Pagination/pagination';
 import SearchBox from '../Components/SearchBox/SearchBox';
+import Genres from '../Components/Common/Genres';
 
 const Movies = () => {
   const [treadingContent, setTreadingContent] = useState([]);
@@ -48,16 +49,7 @@ const Movies = () => {
     }
   };
 
-  const handleTabClick = (genreId) => {
-    setSelectedGenre(genreId);
-    setPage(1);
 
-    if (searchTerm) {
-      fetchSearchApi();
-    } else {
-      fetchMovieApi(genreId, page);
-    }
-  };
 
   useEffect(() => {
     window.scroll(0, 0);
@@ -74,45 +66,9 @@ const Movies = () => {
       <Box bgColor={'#451488'} pt={'100px'} pb={'100px'}>
         <SearchBox placeholder='search movies..' searchTerm={searchTerm} setSearchTerm={setSearchTerm} fetchSearchApi={fetchSearchApi}/>
 
-        <HStack
-          color={' #D3D3D3'}
-          width={'95vw'}
-          padding={'3vw'}
-          overflowX={'scroll'}
-          overflowY={'hidden'}
-          border={'none'}
-          sx={{
-            '::-webkit-scrollbar': { width: '0.5em' },
-            '::-webkit-scrollbar-thumb': { backgroundColor: 'transparent' },
-          }}
-        >
-          {getGener.map((genre) => (
-            <Box
-            cursor={'pointer'}
-              fontWeight={'bolder'}
-              margin={'2px'}
-              minW={'130px'}
-              textAlign={'center'}
-              key={genre.id}
-              onClick={() => handleTabClick(genre.id)}
-              style={
-                genre.id === selectedGenre
-                  ? {
-                      color: 'white',
-                      paddingBottom: '5px',
-                      fontWeight: 'bolder',
-                      fontSize: '20px',
-                      borderRadius:'100px',
-                      background:
-                        'linear-gradient(to top,violet 1%,transparent,transparent,transparent)',
-                    }
-                  : { color: '#D3D3D3' }
-              }
-            >
-              {genre.name}
-            </Box>
-          ))}
-        </HStack>
+       
+        <Genres genre={getGener} setSelectedGenre={setSelectedGenre} setPage={setPage} fetchSearchApi={fetchSearchApi} fetchMovieApi={fetchMovieApi} searchTerm={searchTerm} page={page} selectedGenre={selectedGenre}/>
+
         
         <SimpleGrid columns={[2, 2, 3, 5]} spacing={4} mt={8} paddingLeft={'5vw'} paddingRight={'5vw'}>
           {treadingContent &&
@@ -131,6 +87,7 @@ const Movies = () => {
         selectedGenre={selectedGenre}
         setTreadingContent={setTreadingContent}
       />
+
     </Box>
   );
 };

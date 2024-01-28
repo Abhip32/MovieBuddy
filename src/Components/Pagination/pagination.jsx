@@ -81,7 +81,7 @@ const Pagination = ({ page, numOfPages, setPage, fetchMovieApi, fetchSearchApi,s
       justifyContent="center"
     >
       <Flex>
-        <Button onClick={() => startPage >= 2 && setStartPage(startPage - 1)}>
+        <Button onClick={() => startPage >= 2 && setStartPage(startPage - 5)}>
           <Icon
             as={IoIosArrowBack}
             color="gray.700"
@@ -90,7 +90,7 @@ const Pagination = ({ page, numOfPages, setPage, fetchMovieApi, fetchSearchApi,s
           />
         </Button>
         {renderPageButtons()}
-        <Button onClick={() => startPage <= numOfPages - 10 && setStartPage(startPage + 1)}>
+        <Button onClick={() => startPage <= numOfPages - 10 && setStartPage(startPage + 5)}>
           <Icon
             as={IoIosArrowForward}
             color="gray.700"

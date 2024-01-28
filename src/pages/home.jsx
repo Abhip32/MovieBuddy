@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Box,Divider,Spacer,Text } from '@chakra-ui/react';
-import Navbar from '../Components/Common/Navbar';
+import { Box,Text } from '@chakra-ui/react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Carousel from '../Components/Home/Carousel';
 import SingleData from '../Components/Common/Card';
 import axios from 'axios';
-import Footer from '../Components/Common/Footer';
 
 
 const Home = () => {
@@ -94,7 +92,7 @@ const Home = () => {
   }, []);
 
   const carouselSettings = {
-    slidesToShow: 5,
+    slidesToShow: 6,
     slidesToScroll: 1,
     infinite: true,
     arrows:true,
