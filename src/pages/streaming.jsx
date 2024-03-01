@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { AspectRatio, Box, Select,Text } from '@chakra-ui/react';
+import { AspectRatio, Box, Select, Text } from '@chakra-ui/react';
 import axios from 'axios';
 
 const Streaming = () => {
-  const { type, id,season,episode } = useParams();
+  const { type, id, season, episode } = useParams();
   const [src, setSrc] = useState('');
   const [content, setContent] = useState({});
   const [isLoading, setIsLoading] = useState(false); // Fix: Initialize as false
-  const [selectedSeason, setSelectedSeason] = useState(season||'1');
-  const [selectedEpisode, setSelectedEpisode] = useState(episode||'1');
+  const [selectedSeason, setSelectedSeason] = useState(season || '1');
+  const [selectedEpisode, setSelectedEpisode] = useState(episode || '1');
+  const [currentScreen, setCurrentScreen] = useState(1); // Track current screen
 
   const fetchContent = async () => {
     try {
@@ -23,11 +24,22 @@ const Streaming = () => {
       }
 
       setContent(data);
-      if (type === 'movie' && data) {
-        setSrc(`https://vidsrc.to/embed/movie/${data?.imdb_id}`);
-      } else if (type === 'tv' && data) {
-        setSrc(`https://vidsrc.to/embed/tv/${data?.externalIds.imdb_id}/${selectedSeason}/${selectedEpisode}`);
+
+      // Set src based on current screen
+      if (currentScreen === 1) {
+        if (type === 'movie' && data) {
+          setSrc(`https://vidsrc.to/embed/movie/${data?.imdb_id}`);
+        } else if (type === 'tv' && data) {
+          setSrc(`https://vidsrc.to/embed/tv/${data?.externalIds.imdb_id}/${selectedSeason}/${selectedEpisode}`);
+        }
+      } else if (currentScreen === 2) {
+        if (type === 'movie' && data) {
+          setSrc(`https://multiembed.mov/?video_id=${data?.imdb_id}`);
+        } else if (type === 'tv' && data) {
+          setSrc(`https://multiembed.mov/?video_id=${data?.externalIds.imdb_id}&s=${selectedSeason}&e=${selectedEpisode}`);
+        }
       }
+
       setIsLoading(false); // Fix: Set to false after setting content and source
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -50,7 +62,7 @@ const Streaming = () => {
 
   useEffect(() => {
     fetchContent();
-  }, [type, id, selectedSeason, selectedEpisode]);
+  }, [type, id, selectedSeason, selectedEpisode, currentScreen]); // Add currentScreen to dependencies
 
   const handleSeasonChange = (e) => {
     setSelectedSeason(e.target.value);
@@ -60,34 +72,42 @@ const Streaming = () => {
     setSelectedEpisode(e.target.value);
   };
 
-  if(content)
-  {
-    document.title=content?.name || content?.title;
+  // Function to toggle between screens
+  const toggleScreen = () => {
+    setCurrentScreen(currentScreen === 1 ? 2 : 1);
+  };
+
+  if (content) {
+    document.title = content?.name || content?.title;
   }
 
   return (
-    <Box padding={'10vw'} minH={'100vh'} bg={'black'} >
+    <Box padding={'10vw'} minH={'100vh'} bg={'black'}>
       {content && (
-        <Box mb={4} >
-        <Text fontSize={{ base: 'md', md: 'xl' }} color={'white'} mt={5} mb={5}>
-          {content?.name || content?.title} {type === 'tv' && (`Season ${selectedSeason} Episode ${selectedEpisode}`)}
-        </Text>
-          <AspectRatio maxW='100vw' ratio={16/9}>
-          <iframe
-            title='screen'
-            src={src}
-            allowFullScreen
-            onClick={(event) => {
-              event.preventDefault();
-              // Add your custom click handling code here
-            }}
-          />
-        </AspectRatio>
+        <Box mb={4}>
+          <Text fontSize={{ base: 'md', md: 'xl' }} color={'white'} mt={5} mb={5}>
+            {content?.name || content?.title} {type === 'tv' && (`Season ${selectedSeason} Episode ${selectedEpisode}`)}
+          </Text>
+          <button style={{backgroundColor:'white', padding:'10px', width:'100%'}} onClick={toggleScreen}>Toggle Screen (If not working)</button>
+          <AspectRatio maxW='100vw' ratio={16 / 9}>
+            <iframe
+              title='screen'
+              src={src}
+              allowFullScreen
+              onClick={(event) => {
+                event.preventDefault();
+                // Add your custom click handling code here
+              }}
+            />
+          </AspectRatio>
 
-                  {type === 'tv' && content.number_of_seasons && (
+          {/* Add button to toggle between screens */}
+        
+
+          {type === 'tv' && content.number_of_seasons && (
             <Box bg='white' padding={'20px'}>
               <Text>Season:</Text>
-              <Select value={selectedSeason} onChange={handleSeasonChange} >
+              <Select value={selectedSeason} onChange={handleSeasonChange}>
                 {[...Array(content.number_of_seasons).keys()].map((season) => (
                   <option key={season + 1} value={season + 1}>
                     Season {season + 1}
@@ -97,9 +117,9 @@ const Streaming = () => {
               {content.seasons && (
                 <>
                   <Text>Episode:</Text>
-                  <Select value={selectedEpisode} onChange={handleEpisodeChange}  >
+                  <Select value={selectedEpisode} onChange={handleEpisodeChange}>
                     {[...Array(content.seasons[selectedSeason - 1].episode_count).keys()].map((episode) => (
-                      <option key={episode + 1} value={episode + 1}  >
+                      <option key={episode + 1} value={episode + 1}>
                         Episode {episode + 1}
                       </option>
                     ))}
