@@ -127,6 +127,7 @@ const Home = () => {
             allContent.map((n) => (
               <SingleData key={n.id} {...n} mediaType="movie" />
             ))}
+
         </Slider>
       </Box>
 

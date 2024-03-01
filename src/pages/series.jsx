@@ -5,6 +5,7 @@ import SingleData from '../Components/Common/Card';
 import Pagination from '../Components/Pagination/pagination';
 import SearchBox from '../Components/SearchBox/SearchBox';
 import Genres from '../Components/Common/Genres';
+import SkeletonGrid from '../Components/Common/NoDataGrid';
 
 const Series = () => {
   const [treadingContent, setTreadingContent] = useState([]);
@@ -63,14 +64,18 @@ const Series = () => {
   return (
     <Box minH={'100vh'} bgGradient={'linear(to-b,#451488,#16072b)'}>
       <Box bgColor={'#451488'} pt={'100px'} pb={'100px'}>
-        <SearchBox placeholder='search movies..' searchTerm={searchTerm} setSearchTerm={setSearchTerm} fetchSearchApi={fetchSearchApi}/>
+        <SearchBox placeholder='search series..' searchTerm={searchTerm} setSearchTerm={setSearchTerm} fetchSearchApi={fetchSearchApi}/>
         <Genres genre={getGener} setSelectedGenre={setSelectedGenre} setPage={setPage} fetchSearchApi={fetchSearchApi} fetchMovieApi={fetchMovieApi} searchTerm={searchTerm} page={page} selectedGenre={selectedGenre}/>
         <SimpleGrid columns={[2, 2, 3, 5]} spacing={4} mt={8} paddingLeft={'5vw'} paddingRight={'5vw'}>
           {treadingContent &&
             treadingContent.map((n) => (
               <SingleData key={n.id} {...n} mediaType="tv" />
             ))}
+
         </SimpleGrid>
+
+        {treadingContent.length != 0 &&
+            <SkeletonGrid/>}
       </Box>
       <Pagination
         page={page}

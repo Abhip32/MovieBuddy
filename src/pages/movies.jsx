@@ -5,6 +5,7 @@ import SingleData from '../Components/Common/Card';
 import Pagination from '../Components/Pagination/pagination';
 import SearchBox from '../Components/SearchBox/SearchBox';
 import Genres from '../Components/Common/Genres';
+import SkeletonGrid from '../Components/Common/NoDataGrid';
 
 const Movies = () => {
   const [treadingContent, setTreadingContent] = useState([]);
@@ -76,6 +77,8 @@ const Movies = () => {
               <SingleData key={n.id} {...n} mediaType="movie" />
             ))}
         </SimpleGrid>
+        {!treadingContent  &&
+            <SkeletonGrid/>}
       </Box>
       <Pagination
         page={page}
