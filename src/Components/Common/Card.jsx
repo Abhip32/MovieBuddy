@@ -66,7 +66,7 @@ const SingleData = ({
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageLoaded(true)} // Handle error (e.g., image not found)
         />
-        {!imageLoaded && (
+        {!SingleData && (
           <Box>
           <Skeleton height={{base:'200px',md:'400px'}}/>
             <SkeletonText mt='4' noOfLines={1}  skeletonHeight='2' />

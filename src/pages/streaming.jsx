@@ -24,9 +24,9 @@ const Streaming = () => {
 
       setContent(data);
       if (type === 'movie' && data) {
-        setSrc(`https://multiembed.mov/?video_id=${data?.imdb_id}`);
+        setSrc(`https://vidsrc.to/embed/movie/${data?.imdb_id}`);
       } else if (type === 'tv' && data) {
-        setSrc(`https://multiembed.mov/?video_id=${data?.externalIds.imdb_id}&s=${selectedSeason}&e=${selectedEpisode}`);
+        setSrc(`https://vidsrc.to/embed/tv/${data?.externalIds.imdb_id}/=${selectedSeason}/${selectedEpisode}`);
       }
       setIsLoading(false); // Fix: Set to false after setting content and source
     } catch (error) {
