@@ -77,7 +77,7 @@ const Movies = () => {
               <SingleData key={n.id} {...n} mediaType="movie" />
             ))}
         </SimpleGrid>
-        {!treadingContent  &&
+        {treadingContent.length == 0 &&
             <SkeletonGrid/>}
       </Box>
       <Pagination

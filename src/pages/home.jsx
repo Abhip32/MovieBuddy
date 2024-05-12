@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Box,Text } from '@chakra-ui/react';
+import { Box,Text,Skeleton } from '@chakra-ui/react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Carousel from '../Components/Home/Carousel';
 import SingleData from '../Components/Common/Card';
 import axios from 'axios';
+import SkeletonCards from '../Components/Home/SkeletonCards';
 
 
 const Home = () => {
@@ -123,6 +124,9 @@ const Home = () => {
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >Movies On Air</Text>
         <br/>
         <Slider {...carouselSettings}>
+          {!allContent&& Array.from({ length: 10 }).map((_, index) => (
+            <Skeleton height={'50vh'}  margin={"0px 5px"}/>
+        ))}
           {allContent &&
             allContent.map((n) => (
               <SingleData key={n.id} {...n} mediaType="movie" />
@@ -135,6 +139,9 @@ const Home = () => {
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >TV Series On Air</Text>
         <br/>
         <Slider {...carouselSettings}>
+        {!popularSeries&& Array.from({ length: 10 }).map((_, index) => (
+            <Skeleton height={'50vh'}  margin={"0px 5px"}/>
+        ))}
           {popularSeries &&
             popularSeries.map((n) => (
               <SingleData key={n.id} {...n} mediaType="tv" />
@@ -147,6 +154,9 @@ const Home = () => {
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >Top Rated Movies</Text>
         <br/>
         <Slider {...carouselSettings}>
+        {TopRatedMovies.length==0&& Array.from({ length: 10 }).map((_, index) => (
+            <Skeleton height={'50vh'}  margin={"0px 5px"}/>
+        ))}
           {TopRatedMovies &&
             TopRatedMovies.map((n) => (
               <SingleData key={n.id} {...n} mediaType="tv" />
@@ -158,6 +168,9 @@ const Home = () => {
         <Text fontSize={{ base: 'md', md: '2xl' }}fontWeight="bolder" >Top Rated TV Series</Text>
         <br/>
         <Slider {...carouselSettings}>
+        {TopRatedSeries.length==0&& Array.from({ length: 10 }).map((_, index) => (
+            <Skeleton height={'50vh'}  margin={"0px 5px"}/>
+        ))}
           {TopRatedSeries &&
             TopRatedSeries.map((n) => (
               <SingleData key={n.id} {...n} mediaType="tv" />

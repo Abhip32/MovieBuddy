@@ -74,7 +74,7 @@ const Series = () => {
 
         </SimpleGrid>
 
-        {treadingContent.length != 0 &&
+        {treadingContent.length == 0 &&
             <SkeletonGrid/>}
       </Box>
       <Pagination
