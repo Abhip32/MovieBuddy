@@ -1,91 +1,71 @@
-import React from 'react'
-import { HStack,Button,Box } from '@chakra-ui/react'
-import { AiOutlineLeft,AiOutlineRight } from 'react-icons/ai';
+import React, { useCallback, useRef } from 'react';
+import { HStack, Button, Box } from '@chakra-ui/react';
+import { AiOutlineLeft, AiOutlineRight } from 'react-icons/ai';
 
-const Genres = (props) => {
+const Genres = ({ genre, setSelectedGenre, setPage, searchTerm, fetchSearchApi, fetchMovieApi, selectedGenre, page }) => {
+  const genresContainerRef = useRef(null);
 
-    
-    const scrollLeft = () => {
-        const genresContainer = document.getElementById('genresContainer');
-        if (genresContainer) {
-          genresContainer.scrollBy({
-            left: -200,
-            behavior: 'smooth',
-          });
-        }
-      };
-      
-      const scrollRight = () => {
-        const genresContainer = document.getElementById('genresContainer');
-        if (genresContainer) {
-          genresContainer.scrollBy({
-            left: 200,
-            behavior: 'smooth',
-          });
-        }
-      };
-      
-
-
-  const handleTabClick = (genreId) => {
-    props.setSelectedGenre(genreId);
-    props.setPage(1);
-
-    if (props.searchTerm) {
-      props.fetchSearchApi();
-    } else {
-      props.fetchMovieApi(genreId, props.page);
+  const scroll = useCallback((offset) => {
+    if (genresContainerRef.current) {
+      genresContainerRef.current.scrollBy({
+        left: offset,
+        behavior: 'smooth',
+      });
     }
-  };
+  }, []);
+
+  const handleTabClick = useCallback((genreId) => {
+    setSelectedGenre(genreId);
+    setPage(1);
+    const apiFunction = searchTerm ? fetchSearchApi : fetchMovieApi;
+    apiFunction(genreId, 1);
+  }, [setSelectedGenre, setPage, searchTerm, fetchSearchApi, fetchMovieApi]);
 
   return (
-    <div>
-        
+    <Box width="100%" padding="3vw" overflow="hidden" color="#D3D3D3" >
+      <HStack justify="space-between" align="center" display={'flex'} alignItems={'center'}> 
+        <Button onClick={() => scroll(-200)}>
+          <AiOutlineLeft />
+        </Button>
         <HStack
-          color={' #D3D3D3'}
-          width={'97vw'}
-          padding={'3vw'}
-          overflowX={'scroll'}
-          overflowY={'hidden'}
-          border={'none'}
+          id="genresContainer"
+          ref={genresContainerRef}
+          overflowX="auto"
+          overflowY="hidden"
+          whiteSpace="nowrap"
           sx={{
-            '::-webkit-scrollbar': { width: '0.5em' },
+            '::-webkit-scrollbar': { height: '0.5em' },
             '::-webkit-scrollbar-thumb': { backgroundColor: 'transparent' },
           }}
         >
-        <Button onClick={scrollLeft}><AiOutlineLeft/></Button>
-        <HStack  id="genresContainer"overflowX={'hidden'}>
-        {props.genre.map((genre) => (
+          {genre.map((genreItem) => (
             <Box
-              cursor={'pointer'}
-              fontWeight={'bolder'}
-              margin={'2px'}
-              minW={'130px'}
-              textAlign={'center'}
-              key={genre.id}
-              onClick={() => handleTabClick(genre.id)}
-              style={
-                genre.id === props.selectedGenre
-                  ? {
-                      color: 'white',
-                      paddingBottom: '5px',
-                      fontWeight: 'bolder',
-                      fontSize: '20px',
-                      borderRadius: '100px',
-                      background:
-                        'linear-gradient(to top,violet 1%,transparent,transparent,transparent)',
-                    }
-                  : { color: '#D3D3D3' }
-              }
+              key={genreItem.id}
+              cursor="pointer"
+              fontWeight="bold"
+              padding={'10px'}
+              minW='fit-content'
+              textAlign="center"
+              onClick={() => handleTabClick(genreItem.id)}
+              sx={{
+                color: genreItem.id === selectedGenre ? 'white' : '#D3D3D3',
+                paddingBottom: genreItem.id === selectedGenre && '-5px',
+                fontWeight: genreItem.id === selectedGenre && 'bold',
+                fontSize: genreItem.id === selectedGenre && '20px',
+                borderRadius: genreItem.id === selectedGenre && '100px',
+                background: genreItem.id === selectedGenre && 'linear-gradient(to bottom, violet 1%, transparent 100%)',
+              }}
             >
-              {genre.name}
+              {genreItem.name}
             </Box>
           ))}
         </HStack>
-                <Button onClick={scrollRight}><AiOutlineRight/></Button>
-        </HStack>
-    </div>
-  )
-}
+        <Button onClick={() => scroll(200)}>
+          <AiOutlineRight />
+        </Button>
+      </HStack>
+    </Box>
+  );
+};
 
-export default Genres
+export default React.memo(Genres);

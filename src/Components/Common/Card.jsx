@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { img_300, unavailable } from "../../api/config/DefaultImages";
 import {
@@ -9,6 +9,7 @@ import {
   Badge,
   Skeleton,
   SkeletonText,
+  Center,
 } from "@chakra-ui/react";
 import { AiFillPlayCircle } from "react-icons/ai";
 
@@ -18,28 +19,19 @@ const SingleData = ({
   name,
   id,
   vote_average,
-  release_date,
-  first_air_date,
   mediaType,
   media_type,
 }) => {
   const navigate = useNavigate();
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     navigate(`/${mediaType || media_type}/${id}`);
-  };
-
-  const [isHovered, setHovered] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
+  }, [navigate, mediaType, media_type, id]);
 
   const getBadgeColor = (voteAverage) => {
-    if (voteAverage > 7) {
-      return "green";
-    } else if (voteAverage >= 5 && voteAverage <= 7) {
-      return "yellow";
-    } else {
-      return "red";
-    }
+    if (voteAverage > 7) return "green";
+    if (voteAverage >= 5) return "yellow";
+    return "red";
   };
 
   return (
@@ -49,76 +41,74 @@ const SingleData = ({
       onClick={handleClick}
       cursor="pointer"
       position="relative"
-      margin={"0px 5px"}
-      _hover={{
-        transform: "scale(1.02)",
-        boxShadow: '1px 1px 20px white',
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      padding="0px 5px"
     >
-      {/* Movie Poster */}
-      <Box style={{ position: "relative" }}>
-        <Image
-          src={poster_path ? `${img_300}/${poster_path}` : unavailable}
-          alt="poster"
-          style={{ position: "relative", width: "100%", height: "auto" }}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageLoaded(true)} // Handle error (e.g., image not found)
-        />
-        {!SingleData && (
-          <Box>
-          <Skeleton height={{base:'200px',md:'400px'}}/>
-            <SkeletonText mt='4' noOfLines={1}  skeletonHeight='2' />
-            </Box>
-        )}
-        {imageLoaded && (
-          <Text
-            fontSize={"small"}
-            maxH={"40px"}
-            overflow={'hidden'}
-            whiteSpace={'nowrap'}
-            bg={'black'}
-            textOverflow={'ellipsis'}
-            padding={"10px"}
-            textAlign={"center"}
-            width={"100%"}
-          >
-            {name || title}
-          </Text>
-        )}
+<Box position="relative" backgroundColor={'black'}>
+  <Image
+    src={poster_path ? `${img_300}/${poster_path}` : unavailable}
+    alt="poster"
+    width="100%"
+    height="320px"
+  />
+  {!id && (
+    <Box>
+      <Skeleton height={{ base: "200px", md: "400px" }} />
+      <SkeletonText mt="4" noOfLines={1} skeletonHeight="2" />
+    </Box>
+  )}
+  {id && (
+    <Text
+      fontSize="small"
+      maxH="40px"
+      overflow="hidden"
+      whiteSpace="nowrap"
+      bg="black"
+      textOverflow="ellipsis"
+      padding="10px"
+      textAlign="center"
+      width="100%"
+    >
+      {name || title}
+    </Text>
+  )}
+  {id && (
+    <Badge
+      fontSize="15px"
+      position="absolute"
+      backgroundColor="transparent"
+      top={0}
+      left={0}
+      color={getBadgeColor(Math.round(vote_average * 10) / 10)}
+    >
+      {Math.round(vote_average * 10) / 10}
+    </Badge>
+  )}
+ <Center
+  position="absolute"
+  className="PlayButton"
+  top="50%"
+  left="50%"
+  opacity={0}
+  _hover={{ opacity: 1 }}
+  transition="0.5s ease-in-out"
+  width="100%"
+  height="100%"
+  backgroundColor="rgba(0, 0, 0, 0.5)"
+  transform="translate(-50%, -50%)"
+>
+<IconButton
+  _hover={{ backgroundColor: 'transparent' }}
+  backgroundColor="transparent"
+  icon={<AiFillPlayCircle color="white" size="10vh" />}
+  aria-label="play-button"
+  onClick={handleClick}
+/>
 
-        {!isHovered && imageLoaded && (
-          <Badge
-            fontSize={"15px"}
-            style={{
-              position: "absolute",
-              backgroundColor: "transparent",
-              top: 0,
-              left: 0,
-              color: getBadgeColor(Math.round(vote_average * 10) / 10),
-            }}
-          >
-            {Math.round(vote_average * 10) / 10}
-          </Badge>
-        )}
-      </Box>
+  </Center>
+</Box>
 
-      {/* Play button */}
-      {isHovered && (
-        <IconButton
-          backgroundColor={"transparent"}
-          _hover={{ backgroundColor: "transparent" }}
-          icon={<AiFillPlayCircle color={"white"} size={"10vh"} />}
-          aria-label="play-button"
-          position="absolute"
-          top="50%"
-          left="45%"
-          transform="translate(-50%, -50%)" // Center the button
-        />
-      )}
     </Box>
   );
 };
 
-export default SingleData;
+export default memo(SingleData);
