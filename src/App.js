@@ -7,6 +7,7 @@ import Footer from './Components/Common/Footer';
 import Movies from './pages/movies';
 import Series from './pages/series';
 import Streaming from './pages/streaming';
+import NotFound from './pages/notFound';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="/series" element={<Series/>} />
           <Route path="/streaming/:type/:id" element={<Streaming/>} />
           <Route path="/streaming/:type/:id/:season/:episode" element={<Streaming/>} />
+          <Route path="*" element={<NotFound/>}/>
         </Routes>
         <Footer/>
       </Router>

@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { AspectRatio, Box, Select, Text } from '@chakra-ui/react';
+import { AspectRatio, Box, Select, Text, Button, Spinner, Center } from '@chakra-ui/react';
 import axios from 'axios';
 
 const Streaming = () => {
   const { type, id, season, episode } = useParams();
   const [src, setSrc] = useState('');
   const [content, setContent] = useState({});
-  const [isLoading, setIsLoading] = useState(false); // Fix: Initialize as false
+  const [isLoading, setIsLoading] = useState(true); // Initialize as true
   const [selectedSeason, setSelectedSeason] = useState(season || '1');
   const [selectedEpisode, setSelectedEpisode] = useState(episode || '1');
   const [currentScreen, setCurrentScreen] = useState(1); // Track current screen
 
   const fetchContent = async () => {
+    setIsLoading(true); // Set to true when fetching content
     try {
       const { data } = await axios.get(`
         https://api.themoviedb.org/3/${type}/${id}?api_key=${process.env.REACT_APP_API_KEY}&page=1
@@ -40,7 +41,7 @@ const Streaming = () => {
         }
       }
 
-      setIsLoading(false); // Fix: Set to false after setting content and source
+      setIsLoading(false); // Set to false after setting content and source
     } catch (error) {
       if (error.response && error.response.status === 404) {
         // Handle 404 errors if needed
@@ -72,9 +73,18 @@ const Streaming = () => {
     setSelectedEpisode(e.target.value);
   };
 
-  // Function to toggle between screens
-  const toggleScreen = () => {
-    setCurrentScreen(currentScreen === 1 ? 2 : 1);
+  // Function to switch to Stream 1
+  const switchToStream1 = () => {
+    setCurrentScreen(1);
+  };
+
+  // Function to switch to Stream 2
+  const switchToStream2 = () => {
+    setCurrentScreen(2);
+  };
+
+  const handleIframeLoad = () => {
+    setIsLoading(false); // Set to false when iframe loads
   };
 
   if (content) {
@@ -88,24 +98,31 @@ const Streaming = () => {
           <Text fontSize={{ base: 'md', md: 'xl' }} color={'white'} mt={5} mb={5}>
             {content?.name || content?.title} {type === 'tv' && (`Season ${selectedSeason} Episode ${selectedEpisode}`)}
           </Text>
-          <button style={{backgroundColor:'white', padding:'10px', width:'100%'}} onClick={toggleScreen}>Toggle Screen (If not working)</button>
+          <Box mb={4} display="flex" gap={'2'} justifyContent="flex-start">
+            <Button  onClick={switchToStream1} colorScheme={currentScreen === 1 ? 'purple' : 'gray'}>
+              Stream 1
+            </Button>
+            <Button onClick={switchToStream2} colorScheme={currentScreen === 2 ? 'purple' : 'gray'}>
+              Stream 2
+            </Button>
+          </Box>
           <AspectRatio maxW='100vw' ratio={16 / 9}>
-            <iframe
-              title='screen'
-              src={src}
-              allowFullScreen
-              onClick={(event) => {
-                event.preventDefault();
-                // Add your custom click handling code here
-              }}
-            />
+            {isLoading ? (
+              <Center>
+                <Spinner size="xl" color="white" />
+              </Center>
+            ) : (
+              <iframe
+                title='screen'
+                src={src}
+                allowFullScreen
+                onLoad={handleIframeLoad}
+              />
+            )}
           </AspectRatio>
 
-          {/* Add button to toggle between screens */}
-        
-
           {type === 'tv' && content.number_of_seasons && (
-            <Box bg='white' padding={'20px'}>
+            <Box bg='white' padding={'20px'} mt={4}>
               <Text>Season:</Text>
               <Select value={selectedSeason} onChange={handleSeasonChange}>
                 {[...Array(content.number_of_seasons).keys()].map((season) => (

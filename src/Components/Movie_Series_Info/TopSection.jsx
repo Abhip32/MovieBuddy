@@ -114,7 +114,7 @@ const TopSection = ({ content, isOpen, video, mediaType, setOpen }) => {
                         <a onClick={() => navigate(`/streaming/tv/${content.id}`)}>
                             <Button alignItems='center' justifyContent='center' w='150px' padding='6px' bgGradient='linear(90deg, #800080, #CF9FFF)' borderRadius='20px'>
                                 <FaPlay style={{ color: "white" }} size='20' />
-                                <Text ml={2} fontWeight='bolder' color='white'>Play</Text>
+                                <Text _hover={{cursor:'pointer'}} ml={2} fontWeight='bolder' color='white'>Play</Text>
                             </Button>
                         </a>
                     )}
