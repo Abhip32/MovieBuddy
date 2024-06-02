@@ -85,16 +85,18 @@ const Series = () => {
           setSearchTerm={setSearchTerm}
           fetchSearchApi={fetchSearchApi}
         />
-        <Genres
-          genre={memoizedGenres}
-          setSelectedGenre={setSelectedGenre}
-          setPage={setPage}
-          fetchSearchApi={fetchSearchApi}
-          fetchMovieApi={fetchMovieApi}
-          searchTerm={searchTerm}
-          page={page}
-          selectedGenre={selectedGenre}
-        />
+         {!searchTerm && (
+          <Genres
+            genre={memoizedGenres}
+            setSelectedGenre={setSelectedGenre}
+            setPage={setPage}
+            fetchSearchApi={fetchSearchApi}
+            fetchMovieApi={fetchMovieApi}
+            searchTerm={searchTerm}
+            page={page}
+            selectedGenre={selectedGenre}
+          />
+        )}
         {isLoading ? (
           <SkeletonGrid />
         ) : (
