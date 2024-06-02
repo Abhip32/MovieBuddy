@@ -30,7 +30,7 @@ const SingleData = ({
 
   const getBadgeColor = (voteAverage) => {
     if (voteAverage > 7) return "green";
-    if (voteAverage >= 5) return "yellow";
+    if (voteAverage >= 5) return "#F6BE00";
     return "red";
   };
 
@@ -73,14 +73,20 @@ const SingleData = ({
   )}
   {id && (
     <Badge
-      fontSize="15px"
-      position="absolute"
-      backgroundColor="transparent"
-      top={0}
-      left={0}
-      color={getBadgeColor(Math.round(vote_average * 10) / 10)}
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    fontSize="13px"
+    position="absolute"
+    width="30px"
+    height="35px"
+    backgroundColor="white"
+    top={0}
+    left={0}
+    color={getBadgeColor(Math.round(vote_average * 10) / 10)}
+    clipPath="polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%)"
     >
-      {Math.round(vote_average * 10) / 10}
+      <Text>{Math.round(vote_average * 10) / 10}</Text>
     </Badge>
   )}
  <Center
