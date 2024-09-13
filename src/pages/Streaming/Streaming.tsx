@@ -35,10 +35,17 @@ const Streaming: React.FC = () => {
       const imdbId = type === 'movie' ? data?.imdb_id : (data as any).externalIds.imdb_id;
       if (currentScreen === 1) {
         setSrc(type === 'movie' ? 
-          `https://vidsrc.cc/embed/movie/${imdbId}` :
-          `https://vidsrc.cc/embed/tv/${imdbId}/${selectedSeason}/${selectedEpisode}`
+          `https://vidsrc.cc/v2/embed/movie/${imdbId}` :
+          `https://vidsrc.cc/v2/embed/tv/${imdbId}/${selectedSeason}/${selectedEpisode}`
         );
-      } else if (currentScreen === 2) {
+      }
+      else if (currentScreen === 2) {
+        setSrc(type === 'movie' ? 
+           `https://vidsrc.xyz/embed/movie/${imdbId}` :
+          `https://vidsrc.xyz/embed/tv/${imdbId}/${selectedSeason}/${selectedEpisode}`
+        );
+      }
+      else if (currentScreen === 3) {
         setSrc(type === 'movie' ? 
           `https://multiembed.mov/?video_id=${imdbId}` :
           `https://multiembed.mov/?video_id=${imdbId}&s=${selectedSeason}&e=${selectedEpisode}`
@@ -61,7 +68,7 @@ const Streaming: React.FC = () => {
   const handleEpisodeChange = (e: React.ChangeEvent<HTMLSelectElement>) => setSelectedEpisode(e.target.value);
   const switchToStream1 = () => setCurrentScreen(1);
   const switchToStream2 = () => setCurrentScreen(2);
-
+  const switchToStream3 = () => setCurrentScreen(3);
   useEffect(() => {
     if (content) {
       document.title = content.name || content.title || 'Streaming';
@@ -91,6 +98,12 @@ const Streaming: React.FC = () => {
               className={`px-4 py-2 rounded transition ${currentScreen === 2 ? 'bg-purple-600' : 'bg-gray-700'} hover:bg-purple-700`}
             >
               Stream 2
+            </button>
+            <button
+              onClick={switchToStream3}
+              className={`px-4 py-2 rounded transition ${currentScreen === 3 ? 'bg-purple-600' : 'bg-gray-700'} hover:bg-purple-700`}
+            >
+              Stream 3
             </button>
           </div>
           <div className="relative w-full h-0 pb-[56.25%]">
