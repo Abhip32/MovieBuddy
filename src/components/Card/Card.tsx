@@ -66,7 +66,10 @@ const Card = ({ data, mediaType, size = 'large' }: Props) => {
                         <div className='text-white block font-light text-[14px] hover:text-dark-purple transition-colors duration-300'>{parserData.name}</div>
                         <div className='flex items-end  text-light-gray text-xs'>
                             <span>{parserData.date ? (new Date(parserData.date)).getFullYear() : "N/A"}</span>
-                            <span className='flex items-center ml-2 text-[10px] gap-[2px]'><AiTwotoneStar className='text-sm' />{data.vote_average.toFixed(1)}</span>
+                            <span className='flex items-center ml-2 text-[10px] gap-[2px]'>
+  <AiTwotoneStar className='text-sm' />
+  {typeof data.vote_average === 'number' ? data.vote_average.toFixed(1) : 'N/A'}
+</span>
                             <span className='inline-block text-[10px] border border-light-gray px-1 py-[2px] rounded ml-auto'>{parserData.media_type.toUpperCase()}</span>
                         </div>
                     </div>

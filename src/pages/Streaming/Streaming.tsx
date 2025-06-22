@@ -78,85 +78,92 @@ const Streaming: React.FC = () => {
     }
   }, [content]);
 
-  return (
-    <div className="p-6 sm:p-10 min-h-screen bg-black text-white">
-      {content && (
-        <div className="my-20">
-          <h1 className="text-2xl sm:text-3xl mt-2 sm:mt-5 mb-5">
-            {content.name || content.title} 
-            {type === 'tv' && ` - Season ${selectedSeason}, Episode ${selectedEpisode}`}
-          </h1>
-          <div className="mb-4 flex gap-2">
+return (
+  <div className="p-4 sm:p-6 md:p-10 min-h-screen bg-black text-white">
+    {content && (
+      <div className="mt-16 sm:mt-20 max-w-6xl mx-auto">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-5">
+          {content.name || content.title}
+          {type === 'tv' && (
+            <span className="block sm:inline text-base sm:text-lg font-normal text-purple-300">
+              {' '}– Season {selectedSeason}, Episode {selectedEpisode}
+            </span>
+          )}
+        </h1>
+
+        {/* Stream Switch Buttons */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          {[1, 2, 3].map((num) => (
             <button
-              onClick={switchToStream1}
-              className={`px-4 py-2 rounded transition ${currentScreen === 1 ? 'bg-purple-600' : 'bg-gray-700'} hover:bg-purple-700`}
+              key={num}
+              onClick={() => setCurrentScreen(num)}
+              className={`w-full sm:w-auto px-4 py-2 rounded transition text-sm sm:text-base ${
+                currentScreen === num ? 'bg-purple-600' : 'bg-gray-700'
+              } hover:bg-purple-700`}
             >
-              Stream 1
+              Stream {num}
             </button>
-            <button
-              onClick={switchToStream2}
-              className={`px-4 py-2 rounded transition ${currentScreen === 2 ? 'bg-purple-600' : 'bg-gray-700'} hover:bg-purple-700`}
-            >
-              Stream 2
-            </button>
-            <button
-              onClick={switchToStream3}
-              className={`px-4 py-2 rounded transition ${currentScreen === 3 ? 'bg-purple-600' : 'bg-gray-700'} hover:bg-purple-700`}
-            >
-              Stream 3
-            </button>
-          </div>
-          <div className="relative w-full h-0 pb-[56.25%]">
-            {isLoading ? (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-12 h-12 border-4 border-t-4 border-gray-400 border-solid rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <iframe
-                title="screen"
-                src={src}
-                className="absolute inset-0 w-full h-full"
-                allowFullScreen
-                onLoad={() => setIsLoading(false)}
-              />
-            )}
-          </div>
-          {type === 'tv' && content.number_of_seasons && (
-            <div className="bg-gray-800 p-4 mt-4 rounded">
-              <label className="block mb-2">Season:</label>
+          ))}
+        </div>
+
+        {/* Video Player */}
+        <div className="relative w-full h-0 pb-[56.25%] mb-6 rounded-lg overflow-hidden">
+          {isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+              <div className="w-12 h-12 border-4 border-t-transparent border-gray-400 rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <iframe
+              title="Streaming Player"
+              src={src}
+              className="absolute inset-0 w-full h-full rounded"
+              allowFullScreen
+              onLoad={() => setIsLoading(false)}
+            />
+          )}
+        </div>
+
+        {/* Season & Episode Selectors */}
+        {type === 'tv' && content.number_of_seasons && (
+          <div className="bg-gray-800 p-4 rounded-lg space-y-4">
+            <div>
+              <label className="block mb-1 text-sm font-medium">Season:</label>
               <select
                 value={selectedSeason}
                 onChange={handleSeasonChange}
-                className="block w-full p-2 mb-4 bg-gray-900 border border-gray-700 rounded"
+                className="block w-full p-2 bg-gray-900 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
               >
-                {[...Array(content.number_of_seasons).keys()].map(season => (
-                  <option key={season + 1} value={season + 1}>
-                    Season {season + 1}
+                {[...Array(content.number_of_seasons).keys()].map((s) => (
+                  <option key={s + 1} value={s + 1}>
+                    Season {s + 1}
                   </option>
                 ))}
               </select>
-              {content.seasons && (
-                <>
-                  <label className="block mb-2">Episode:</label>
-                  <select
-                    value={selectedEpisode}
-                    onChange={handleEpisodeChange}
-                    className="block w-full p-2 bg-gray-900 border border-gray-700 rounded"
-                  >
-                    {[...Array(content.seasons[parseInt(selectedSeason) - 1]?.episode_count || 0).keys()].map(episode => (
-                      <option key={episode + 1} value={episode + 1}>
-                        Episode {episode + 1}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
             </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+
+            {content.seasons && (
+              <div>
+                <label className="block mb-1 text-sm font-medium">Episode:</label>
+                <select
+                  value={selectedEpisode}
+                  onChange={handleEpisodeChange}
+                  className="block w-full p-2 bg-gray-900 border border-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-purple-600"
+                >
+                  {[...Array(content.seasons[parseInt(selectedSeason) - 1]?.episode_count || 0).keys()].map((e) => (
+                    <option key={e + 1} value={e + 1}>
+                      Episode {e + 1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+);
+
 };
 
 export default Streaming;

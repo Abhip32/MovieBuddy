@@ -10,6 +10,7 @@ export interface FilterData {
     genres: string[],
     languages: string[],
     year: string,
+    disabled?: boolean
 
 }
 
@@ -21,6 +22,14 @@ type Props = {
 
 const FilterBar = ({ media_type, onFilter }: Props) => {
     const [searchPrams, setSearchParams] = useSearchParams()
+    const filtersApplied = useMemo(() => {
+    return (
+        searchPrams.getAll("genres").length > 0 ||
+        searchPrams.getAll("languages").length > 0 ||
+        !!searchPrams.get("year")
+    )
+}, [searchPrams])
+
     const [filterData, setFilterData] = useState<FilterData>({
         genres: [],
         languages: [],
@@ -120,7 +129,7 @@ const FilterBar = ({ media_type, onFilter }: Props) => {
             <Dropdown grid key={1} selected={genresSelectedString} buttonIcon={<FaFolderOpen className='text-sm' />} title='Genre' renderItems={renderGenre} />
             <Dropdown grid key={2} selected={languagesSelectedString} dropContentClassName='languages-drop' buttonIcon={<FaGlobeAmericas className='text-sm' />} title='Languages' renderItems={renderCountry} />
             <Dropdown key={3} selected={yearSelectedString} buttonIcon={<FaCalendarAlt className='text-sm' />} title='Years' renderItems={renderYear} />
-            <button onClick={() => onFilter && onFilter(filterData)} className=' w-[48%] xs:w-auto px-2 py-1.5 hover:opacity-75 cursor-pointer transition-opacity duration-300 h-full font-light text-sm gap-x-1 flex justify-center items-center bg-white rounded'><FaFilter className='text-base' />Filter</button>
+            <button onClick={() => onFilter && onFilter(filterData)} disabled={!filtersApplied} className=' w-[48%] xs:w-auto px-2 py-1.5 hover:opacity-75 cursor-pointer transition-opacity duration-300 h-full font-light text-sm gap-x-1 flex justify-center items-center bg-white rounded'><FaFilter className='text-base' />Filter</button>
         </div>
     )
 }

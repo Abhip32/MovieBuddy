@@ -102,7 +102,8 @@ const Slice = memo(({ movie, genres, onClickTrailer }: SliceProps) => {
                     <div className="movie-info flex items-center gap-2 sm:gap-4 md:gap-6 mt-2">
                         <Link to={`${urlMap[movie.media_type]}`} className="quality px-3 py-0.5 flex items-center rounded bg-dark-purple font-medium text-white text-xl">{movie.media_type === "movie" ? <RiMovie2Fill /> : <MdLiveTv />}</Link>
                         <span className="rating flex  gap-1 text-white text-sm">
-                            <FaStar color='yellow' size={16} />{movie.vote_average.toFixed(1)}
+                            <FaStar color='yellow' size={16} />{typeof movie?.vote_average === 'number' ? movie.vote_average.toFixed(1) : 'N/A'}
+
                         </span>
 
                         <div className="cate">

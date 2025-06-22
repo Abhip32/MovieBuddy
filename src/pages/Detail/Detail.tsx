@@ -20,6 +20,7 @@ import { useVideoModal } from '../../context/VideoModal/VideoModal.context';
 import { siteMap } from '../../Types/common';
 import ListCastHorizontal from '../../components/ListCastHorizontal/ListCastHorizontal';
 import { BiPlay } from 'react-icons/bi';
+import { HiPlay } from 'react-icons/hi2';
 
 type Props = {
   mediaType: TmdbMediaType;
@@ -146,7 +147,8 @@ const Detail = ({ mediaType }: Props) => {
                   ).getFullYear() || 'N/A'}
                 </span>
                 <span className='flex items-center text-sm'>
-                  <AiFillStar color='yellow' className='text-xl mr-1' /> {data.data.vote_average.toFixed(2)}
+                  <AiFillStar color='yellow' className='text-xl mr-1' /> {typeof data?.data?.vote_average === 'number' ? data.data.vote_average.toFixed(2) : 'N/A'}
+
                 </span>
               </div>
               <div className='flex items-center gap-6 flex-wrap mt-6'>
@@ -243,44 +245,41 @@ const Detail = ({ mediaType }: Props) => {
           )}
         </select>
       </div>
-      <div className="max-h-[590px] mt-5 overflow-y-auto w-[90vw]">
-        {episodes.map((episode) => (
-          <div
-            key={episode.id}
-            className="text-white pt-4 pb-4 pr-4 rounded cursor-pointer transform hover:scale-95 transition-transform duration-200 flex flex-row space-x-4"
-          >
-            <div className="relative w-[150px] h-[100px]">
-              <LazyLoadImage
-                src={originalImage(episode.still_path, 300)}
-                alt={`Episode ${episode.episode_number}`}
-                className="w-full h-full object-cover"
-              />
-              {/* Play button */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
-                <div className="bg-white bg-opacity-25 p-3 rounded-full">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    className="w-10 h-10 text-white"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-5.664 3.266A1 1 0 018 13.466V10.53a1 1 0 011.488-.874l5.664 3.266a1 1 0 010 1.748z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="w-[calc(100%-150px)]">
-              <h3 className="font-semibold text-lg">
-                S{selectedSeason} E{episode.episode_number} - {episode.name}
-              </h3>
-              <p className="text-sm text-white opacity-50 line-clamp-2">
-                {episode.overview}
-              </p>
-            </div>
+      <div className="max-h-[590px] mt-5 overflow-y-auto w-[90vw] mx-auto">
+  {episodes.map((episode) => (
+    <div
+      key={episode.id}
+      className="group text-white py-4 px-2 sm:px-4 rounded-lg cursor-pointer hover:bg-black/40 transition duration-300 flex flex-col sm:flex-row gap-4"
+    >
+      {/* Thumbnail */}
+      <div className="relative w-full sm:w-[180px] h-[180px] sm:h-[100px] flex-shrink-0"  onClick={() => handleEpisodeClick(selectedSeason||1, episode.episode_number)}>
+        <LazyLoadImage
+          src={originalImage(episode.still_path, 300)}
+          alt={`Episode ${episode.episode_number}`}
+          className="w-full h-full object-cover rounded-lg"
+        />
+        {/* Play Button Overlay (visible when parent is hovered) */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg">
+          <div className="bg-white bg-opacity-25 p-3 rounded-full">
+            <HiPlay className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </div>
-        ))}
+        </div>
       </div>
+
+      {/* Episode Info */}
+      <div className="flex-1">
+        <h3 className="font-semibold text-lg sm:text-xl">
+          S{selectedSeason} E{episode.episode_number} - {episode.name}
+        </h3>
+        <p className="text-sm text-white opacity-70 mt-1 line-clamp-2">
+          {episode.overview}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
+
+
     </Wrapper>
   </div>
 )}
