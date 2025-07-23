@@ -21,13 +21,15 @@
     "react-dom": "^18.2.0",
     "react-easy-crop": "^5.0.0",
     "react-hook-form": "^7.45.2",
+    "react-hot-toast": "^2.5.2",
     "react-icons": "^4.8.0",
     "react-lazy-load-image-component": "^1.5.6",
     "react-loader-spinner": "^5.3.4",
     "react-loading-skeleton": "^3.2.1",
     "react-router-dom": "^6.9.0",
     "swiper": "^9.1.0",
-    "yup": "^1.2.0"
+    "yup": "^1.2.0",
+    "react-google-login": "^5.2.2"
   },
   "devDependencies": {
     "@types/react": "^18.0.27",
@@ -39,5 +41,18 @@
     "tailwindcss": "^3.2.7",
     "typescript": "^4.9.3",
     "vite": "^4.1.0"
-  }
+  },
+  "description": "",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhip32/MovieBuddy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Abhip32/MovieBuddy/issues"
+  },
+  "homepage": "https://github.com/Abhip32/MovieBuddy#readme"
 }

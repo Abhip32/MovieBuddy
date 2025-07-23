@@ -7,11 +7,14 @@ import classnames from 'classnames'
 import { Link, NavLink, useMatches } from 'react-router-dom'
 import { urlMap } from '../../Types/common'
 import Logo from '../Logo/Logo'
+import { useAuth } from '../../context/AuthContext/AuthContext'
+import UserProfile from '../UserProfile/UserProfile'
 
 const NavBar = () => {
     const [showNav, setShowNav] = useState<boolean>(false)
     const navRef = useRef<HTMLDivElement>(null)
     const matches = useMatches()
+    const { user } = useAuth();
 
     const darkNav: boolean = useMemo(() => {
         return matches.some(route => (Object.keys(urlMap) as Array<keyof typeof urlMap>).some(key => route.pathname === urlMap[key]))
@@ -43,7 +46,17 @@ const NavBar = () => {
                 <Link to='/search' className="search-box group ml-auto w-9 h-9 rounded-full flex justify-center items-center transition duration-300 ease-in-out hover:bg-white bg-white/10">
                     <AiOutlineSearch size={20} className='text-white/50 group-hover:text-gray-500' />
                 </Link>
-
+                <div className="ml-4">
+                    {user ? (
+                        <UserProfile />
+                    ) : (
+                        <Link to="/signin">
+                            <button className="bg-primary text-white px-4 py-2 rounded-md">
+                                Sign In
+                            </button>
+                        </Link>
+                    )}
+                </div>
             </Wrapper>
         </header>
     )
