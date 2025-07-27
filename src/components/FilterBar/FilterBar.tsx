@@ -73,25 +73,33 @@ const FilterBar = ({ media_type, onFilter }: Props) => {
 
     }, [searchPrams])
 
+    const updateSearchParams = (newFilterData: FilterData) => {
+        const params: Record<string, string | string[]> = {};
+        if (newFilterData.genres.length > 0) params.genres = newFilterData.genres;
+        if (newFilterData.languages.length > 0) params.languages = newFilterData.languages;
+        if (newFilterData.year) params.year = newFilterData.year;
+        setSearchParams(params);
+    };
+
     //* handle select year
     const handleSelectYear = (checked: boolean, value: string) => {
-        let data = filterData
-        if (checked) data.year = value
-        setFilterData({ ...data })
+        let data = { ...filterData };
+        data.year = checked ? value : "";
+        setFilterData(data);
+        updateSearchParams(data);
     }
 
     //* handle select languages and genres
     const createHandleSelect = (type: "languages" | "genres") => {
         return (checked: boolean, value: string) => {
-            let data = { ...filterData }
+            let data = { ...filterData };
             if (checked) {
-                data[type].push(value)
-                setFilterData({ ...filterData })
+                data[type] = [...data[type], value];
+            } else {
+                data[type] = data[type].filter((v) => v !== value);
             }
-            else {
-                data[type].splice(data[type].indexOf(value), 1)
-                setFilterData({ ...filterData })
-            }
+            setFilterData(data);
+            updateSearchParams(data);
         }
     }
 
