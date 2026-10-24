@@ -8,9 +8,45 @@
 
 ---
 
-## 📸 Preview
+## 📸 Screenshots
 
-![MovieBuddy Live Preview](./screenshots/preview.png)
+### Home & Trending Showcase
+![Home View](./screenshots/Screenshot%202026-10-25%20030531.png)
+
+---
+
+### Movies & Category Exploration
+![Movies Listing](./screenshots/Screenshot%202026-10-25%20030542.png)
+
+---
+
+### Movie Details, Backdrop & Overview
+![Movie Details](./screenshots/Screenshot%202026-10-25%20030559.png)
+
+---
+
+### Cast & Character Filmographies
+![Cast Information](./screenshots/Screenshot%202026-10-25%20030617.png)
+
+---
+
+### Video Trailers & Teasers
+![Trailer Playback](./screenshots/Screenshot%202026-10-25%20030635.png)
+
+---
+
+### TV Series & Episode Catalog
+![TV Series](./screenshots/Screenshot%202026-10-25%20030645.png)
+
+---
+
+### Actor Details & Full Credits
+![Actor Profile](./screenshots/Screenshot%202026-10-25%20030658.png)
+
+---
+
+### Search & Instant Filtering
+![Search Results](./screenshots/Screenshot%202026-10-25%20030716.png)
 
 ---
 
