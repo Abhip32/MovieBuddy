@@ -11,12 +11,6 @@
 
 ## 📸 Screenshots
 
-### CineBot AI — Personalized Cinema Curator & Mood Watchlists
-Intelligent movie recommendation engine powered by Google Gemini 2.5 Flash with structured JSON output, real-time TMDB poster hydration, critic commentary, and high-definition card presentation.
-![CineBot AI Assistant](./screenshots/cinebot-ai.png)
-
----
-
 ### Home & Trending Showcase
 ![Home View](./screenshots/Screenshot%202026-10-25%20030531.png)
 
@@ -54,6 +48,12 @@ Intelligent movie recommendation engine powered by Google Gemini 2.5 Flash with 
 
 ### Search & Instant Filtering
 ![Search Results](./screenshots/Screenshot%202026-10-25%20030716.png)
+
+---
+
+### CineBot AI — Personalized Cinema Curator & Mood Watchlists
+Intelligent movie recommendation engine powered by Google Gemini 2.5 Flash with structured JSON output, real-time TMDB poster hydration, critic commentary, and high-definition card presentation.
+![CineBot AI Assistant](./screenshots/z-cinebot-ai.png)
 
 ---
 
