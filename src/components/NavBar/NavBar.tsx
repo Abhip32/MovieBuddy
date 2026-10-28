@@ -45,19 +45,19 @@ const NavBar = () => {
                         <NavLink to={"/tv-series"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>TV-Series</NavLink>
                     </nav>
 
-                    <div className="flex items-center gap-2.5 ml-auto">
+                    <div className="flex items-center gap-2 sm:gap-2.5 ml-auto">
                         {/* Quick CineBot AI Trigger */}
                         <button
                             type="button"
                             onClick={() => setShowAiModal(true)}
                             title="Open CineBot AI"
-                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-white bg-white/10 hover:bg-dark-purple transition-all duration-300 cursor-pointer border border-white/10 hover:border-dark-purple"
+                            className="group flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-medium text-white hover:text-dark-purple bg-white/10 hover:bg-white/20 transition-all duration-300 cursor-pointer border border-white/10 hover:border-dark-purple flex-shrink-0"
                         >
-                            <IoSparkles className="text-dark-purple text-xs" />
-                            <span>CineBot</span>
+                            <IoSparkles className="text-dark-purple group-hover:text-white transition-colors duration-300 text-xs" />
+                            <span className="transition-colors duration-300 group-hover:text-dark-purple">CineBot</span>
                         </button>
 
-                        <Link to='/search' className="search-box group w-9 h-9 rounded-full flex justify-center items-center transition duration-300 ease-in-out hover:bg-white bg-white/10">
+                        <Link to='/search' className="search-box group w-9 h-9 rounded-full flex justify-center items-center transition duration-300 ease-in-out hover:bg-white bg-white/10 flex-shrink-0">
                             <AiOutlineSearch size={20} className='text-white/50 group-hover:text-gray-500' />
                         </Link>
                     </div>

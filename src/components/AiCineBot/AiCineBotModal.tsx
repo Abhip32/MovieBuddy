@@ -199,49 +199,49 @@ const AiCineBotModal: React.FC<AiCineBotModalProps> = ({
         className="relative w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl bg-[#0f0f0f] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.9)] overflow-hidden text-white"
       >
         {/* Header Bar */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-black-2">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-dark-purple/20 border border-dark-purple/40 flex items-center justify-center">
-              <IoSparkles className="text-dark-purple text-lg animate-pulse" />
+        <div className="flex items-center justify-between px-3.5 py-3 sm:px-5 sm:py-4 border-b border-white/10 bg-black-2 flex-shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-dark-purple/20 border border-dark-purple/40 flex items-center justify-center flex-shrink-0">
+              <IoSparkles className="text-dark-purple text-base sm:text-lg animate-pulse" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h2 className="text-base sm:text-lg font-medium text-white tracking-wide">
+                <h2 className="text-sm sm:text-base md:text-lg font-semibold text-white tracking-wide whitespace-nowrap">
                   CineBot AI
                 </h2>
-                <span className="px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-dark-purple/20 text-dark-purple border border-dark-purple/40">
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-dark-purple/20 text-dark-purple border border-dark-purple/40 whitespace-nowrap">
                   Movie Recommender
                 </span>
               </div>
-              <p className="text-xs text-light-gray mt-0.5">
-                Powered by Google Gemini 2.5 & TMDB
+              <p className="text-[11px] sm:text-xs text-light-gray truncate max-w-[190px] sm:max-w-none mt-0.5">
+                Powered by Gemini 2.5 & TMDB
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-2">
             <button
               type="button"
               onClick={() => setShowKeyInput((prev) => !prev)}
               title="Configure Custom API Key"
-              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-light-gray hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-white/10 text-light-gray hover:text-white transition-colors cursor-pointer"
             >
-              <FaKey size={13} />
+              <FaKey className="text-xs sm:text-[13px]" />
             </button>
             <button
               type="button"
               onClick={onClose}
               title="Close"
-              className="p-2 rounded-lg bg-white/5 hover:bg-dark-purple text-light-gray hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/5 hover:bg-dark-purple text-light-gray hover:text-white transition-colors cursor-pointer"
             >
-              <IoClose size={20} />
+              <IoClose className="text-lg sm:text-xl" />
             </button>
           </div>
         </div>
 
         {/* API Key Drawer */}
         {showKeyInput && (
-          <div className="p-3 bg-black-2 border-b border-white/10 flex flex-col sm:flex-row items-center gap-3 text-xs">
+          <div className="p-3 bg-black-2 border-b border-white/10 flex flex-col sm:flex-row items-center gap-3 text-xs flex-shrink-0">
             <div className="flex-1 w-full text-light-gray">
               <span className="text-white font-medium">Custom Gemini Key: </span>
               <span className="opacity-80">
@@ -270,35 +270,35 @@ const AiCineBotModal: React.FC<AiCineBotModalProps> = ({
         )}
 
         {/* Search Input Bar */}
-        <div className="p-4 sm:p-5 bg-black-2 border-b border-white/10 flex-shrink-0">
+        <div className="p-3 sm:p-5 bg-black-2 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-0">
               <input
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCurate()}
-                placeholder="Search by vibe, plot, genre, or 'movies like Interstellar'..."
-                className="w-full px-4 py-2.5 rounded-xl bg-black border border-white/10 text-sm text-white placeholder-light-gray/60 focus:outline-none focus:border-dark-purple transition-colors"
+                placeholder="Search by vibe, plot, genre, or title..."
+                className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-black border border-white/10 text-xs sm:text-sm text-white placeholder-light-gray/60 focus:outline-none focus:border-dark-purple transition-colors"
               />
             </div>
             <button
               type="button"
               disabled={loading}
               onClick={() => handleCurate()}
-              className="px-5 py-2.5 rounded-xl bg-dark-purple hover:bg-deep-purple font-medium text-xs sm:text-sm text-white transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-dark-purple hover:bg-deep-purple font-medium text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 flex-shrink-0"
             >
               {loading ? (
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <IoSparkles />
+                <IoSparkles className="text-xs sm:text-sm" />
               )}
               <span>Curate</span>
             </button>
           </div>
 
           {/* Mood Suggestion Chips */}
-          <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 mt-2.5 sm:mt-3 overflow-x-auto pb-1 scrollbar-none">
             {MOOD_SUGGESTIONS.map((chip, idx) => (
               <button
                 key={idx}
@@ -307,7 +307,7 @@ const AiCineBotModal: React.FC<AiCineBotModalProps> = ({
                   setPrompt(chip);
                   handleCurate(chip);
                 }}
-                className="px-3 py-1 rounded-full text-xs bg-white/5 hover:bg-dark-purple/30 border border-white/10 hover:border-dark-purple text-light-gray hover:text-white transition-all whitespace-nowrap cursor-pointer"
+                className="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs bg-white/5 hover:bg-dark-purple/30 border border-white/10 hover:border-dark-purple text-light-gray hover:text-white transition-all whitespace-nowrap cursor-pointer flex-shrink-0"
               >
                 {chip}
               </button>
