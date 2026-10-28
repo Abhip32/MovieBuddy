@@ -5,6 +5,7 @@ import { BsFillPlayFill, BsFillPlayCircleFill } from "react-icons/bs";
 import { AiTwotoneStar } from "react-icons/ai";
 import { FaKey, FaPlay } from "react-icons/fa";
 import { HiArrowPath } from "react-icons/hi2";
+import classNames from "classnames";
 import Wrapper from "../../components/Wrapper/Wrapper";
 import {
   getAiMovieRecommendations,
@@ -28,25 +29,25 @@ const MOOD_SUGGESTIONS = [
 const CURATED_THEMES = [
   {
     title: "Mind-Bending & Paradoxes",
-    prompt: "Mind-bending sci-fi movies with reality questions and twists",
+    prompt: "Mind-bending sci-fi movies and TV series with reality questions and twists",
     icon: "🧠",
     desc: "Stories that challenge reality, alternate timelines, and perception.",
   },
   {
     title: "High-Stakes Heists & Suspense",
-    prompt: "Intelligent heist movies and cat-and-mouse thrillers",
+    prompt: "Intelligent heist movies and cat-and-mouse crime thrillers",
     icon: "💎",
     desc: "Cerebral masterminds, complex plans, and gripping tension.",
   },
   {
     title: "Atmospheric Neo-Noir",
-    prompt: "Atmospheric cyberpunk and neo-noir mystery films",
+    prompt: "Atmospheric cyberpunk and neo-noir mystery films and series",
     icon: "🌃",
     desc: "Rain-slicked streets, cynical detectives, and neon shadows.",
   },
   {
     title: "Cozy & Heartwarming",
-    prompt: "Heartwarming, comforting movies for a relaxed evening",
+    prompt: "Heartwarming comforting movies and feel-good series for a relaxed evening",
     icon: "☕",
     desc: "Feel-good cinema, lovable characters, and gentle narratives.",
   },
@@ -95,6 +96,7 @@ const CineBot: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [commentary, setCommentary] = useState("");
   const [movies, setMovies] = useState<AiMovieRecommendation[]>([]);
+  const [mediaFilter, setMediaFilter] = useState<"all" | "movie" | "tv">("all");
   const [isCached, setIsCached] = useState(false);
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [apiKey, setApiKey] = useState("");
@@ -128,6 +130,7 @@ const CineBot: React.FC = () => {
 
     const queryKey = cleanQuery.toLowerCase();
     setActiveTrailer(null);
+    setMediaFilter("all");
 
     // Sync query param in URL
     setSearchParams({ q: cleanQuery });
@@ -286,6 +289,14 @@ const CineBot: React.FC = () => {
     navigate(`/stream/${type}/${movie.id || 0}`);
   };
 
+  const movieCount = movies.filter((m) => m.mediaType === "movie").length;
+  const tvCount = movies.filter((m) => m.mediaType === "tv").length;
+
+  const filteredMovies = movies.filter((m) => {
+    if (mediaFilter === "all") return true;
+    return m.mediaType === mediaFilter;
+  });
+
   return (
     <div className="min-h-screen pt-24 sm:pt-28 pb-16 bg-gradient-to-b from-[#140526] via-black-2 to-black text-white font-poppins relative overflow-hidden">
       {/* Ambient Top Glow */}
@@ -297,7 +308,7 @@ const CineBot: React.FC = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-semibold bg-dark-purple/20 text-dark-purple border border-dark-purple/40 mb-3 tracking-wider uppercase">
             <IoSparkles className="animate-pulse" />
-            <span>AI Film Curator</span>
+            <span>AI Film & Series Curator</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
@@ -305,7 +316,7 @@ const CineBot: React.FC = () => {
           </h1>
 
           <p className="mt-3 text-xs sm:text-sm md:text-base text-light-gray leading-relaxed max-w-2xl mx-auto">
-            Search by feeling, micro-genres, shocking plot twists, or ask for &ldquo;movies like Interstellar with high emotional stakes&rdquo;.
+            Search by feeling, micro-genres, shocking plot twists, or ask for &ldquo;movies and TV series like Interstellar or Dark&rdquo;.
           </p>
 
           {/* Custom API Key Button */}
@@ -363,7 +374,7 @@ const CineBot: React.FC = () => {
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Search by vibe, plot, genre, or 'movies like Inception'..."
+                placeholder="Search by vibe, plot, genre, or 'movies & shows like Inception'..."
                 className="w-full px-3 py-2.5 sm:py-3 bg-transparent text-xs sm:text-sm text-white placeholder-light-gray/60 focus:outline-none"
               />
               {prompt && (
@@ -421,7 +432,7 @@ const CineBot: React.FC = () => {
                 <IoSparkles className="text-dark-purple text-xl animate-pulse" />
               </div>
               <h3 className="text-lg font-semibold text-white">
-                CineBot is searching cinema databases...
+                CineBot is searching cinema & TV databases...
               </h3>
               <p className="text-xs sm:text-sm text-light-gray mt-1 max-w-sm">
                 Analyzing narrative plots, thematic nuances, and fetching rich TMDB streaming data
@@ -434,7 +445,7 @@ const CineBot: React.FC = () => {
             <div className="py-8 max-w-4xl mx-auto">
               <div className="text-center mb-8">
                 <h2 className="text-lg sm:text-xl font-bold text-white mb-1">
-                  Or explore curated cinema themes
+                  Or explore curated cinema & series themes
                 </h2>
                 <p className="text-xs sm:text-sm text-light-gray">
                   Tap any theme to instantly discover hand-picked masterworks
@@ -472,7 +483,7 @@ const CineBot: React.FC = () => {
             </div>
           )}
 
-          {/* Recommendations Results Grid */}
+          {/* Recommendations Results */}
           {!loading && movies.length > 0 && (
             <div className="space-y-6">
               {/* Commentary Banner */}
@@ -509,29 +520,77 @@ const CineBot: React.FC = () => {
                 </div>
               )}
 
-              {/* Standard Proportional MovieBuddy Cards Grid: 2 cols mobile, 3-4 tablet, 5-6 desktop */}
-              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
-                {movies.map((movie, idx) => {
-                  const posterImg = movie.posterPath
-                    ? originalImage(movie.posterPath, 400)
-                    : movie.backdropPath
+              {/* Format Filter Bar (All / Movies / TV Series) */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-1.5 bg-black-2 p-1 rounded-xl border border-white/10 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setMediaFilter("all")}
+                    className={classNames(
+                      "px-3 py-1 rounded-lg transition-colors cursor-pointer",
+                      mediaFilter === "all"
+                        ? "bg-dark-purple text-white font-semibold shadow-md"
+                        : "text-light-gray hover:text-white"
+                    )}
+                  >
+                    All ({movies.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaFilter("movie")}
+                    className={classNames(
+                      "px-3 py-1 rounded-lg transition-colors cursor-pointer",
+                      mediaFilter === "movie"
+                        ? "bg-dark-purple text-white font-semibold shadow-md"
+                        : "text-light-gray hover:text-white"
+                    )}
+                  >
+                    Movies ({movieCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaFilter("tv")}
+                    className={classNames(
+                      "px-3 py-1 rounded-lg transition-colors cursor-pointer",
+                      mediaFilter === "tv"
+                        ? "bg-dark-purple text-white font-semibold shadow-md"
+                        : "text-light-gray hover:text-white"
+                    )}
+                  >
+                    TV Series ({tvCount})
+                  </button>
+                </div>
+
+                <div className="text-xs text-light-gray">
+                  Showing {filteredMovies.length} recommendations
+                </div>
+              </div>
+
+              {/* Wide 16:9 Landscape Card Grid (The same sleek mobile card design across all devices!) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {filteredMovies.map((movie, idx) => {
+                  const backdropImg = movie.backdropPath
                     ? originalImage(movie.backdropPath, 500)
+                    : movie.posterPath
+                    ? originalImage(movie.posterPath, 500)
                     : "/images/no-image.jpg";
+
+                  const isTv = movie.mediaType === "tv";
 
                   return (
                     <div
                       key={movie.id || idx}
-                      className="card group flex flex-col justify-between rounded-xl bg-black-2 border border-white/10 hover:border-dark-purple/60 transition-all duration-300 overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1"
+                      className="card group flex flex-col justify-between rounded-2xl bg-black-2 border border-white/10 hover:border-dark-purple/60 transition-all duration-300 overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-1"
                     >
                       <div>
-                        {/* Standard Proportional Poster Image */}
+                        {/* 16:9 Wide Cinematic Visual (Landscape Backdrop) */}
                         <div
                           onClick={() => handlePlayTrailer(movie)}
-                          className="relative aspect-[2/3] w-full overflow-hidden bg-black cursor-pointer rounded-t-xl"
+                          className="relative aspect-video w-full overflow-hidden bg-black cursor-pointer rounded-t-2xl"
                           title="Click to watch trailer"
                         >
                           <img
-                            src={posterImg}
+                            src={backdropImg}
                             alt={movie.title}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
@@ -542,63 +601,74 @@ const CineBot: React.FC = () => {
                           />
 
                           {/* Star Rating Badge */}
-                          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[10px] text-amber-400 flex items-center gap-1 border border-white/10">
-                            <AiTwotoneStar size={11} />
+                          <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-sm text-[11px] text-amber-400 flex items-center gap-1 border border-white/10">
+                            <AiTwotoneStar size={12} />
                             <span>{movie.voteAverage ? movie.voteAverage.toFixed(1) : "N/A"}</span>
                           </div>
 
-                          {/* Media Type Badge */}
-                          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] uppercase text-white font-medium border border-white/10">
-                            {movie.mediaType === "tv" ? "TV" : "Movie"}
+                          {/* Media Type Badge (TV Series or Movie) */}
+                          <div
+                            className={classNames(
+                              "absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider backdrop-blur-sm border",
+                              isTv
+                                ? "bg-dark-purple text-white border-dark-purple"
+                                : "bg-black/80 text-light-gray border-white/20"
+                            )}
+                          >
+                            {isTv ? "TV Series" : "Movie"}
                           </div>
 
-                          {/* Center Hover Play Circle matching Card.tsx */}
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full text-dark-purple text-3xl sm:text-4xl flex items-center justify-center scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-xl pointer-events-none">
+                          {/* Center Hover Play Circle */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full text-dark-purple text-4xl flex items-center justify-center scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-2xl pointer-events-none">
                             <BsFillPlayCircleFill />
                           </div>
                         </div>
 
                         {/* Card Info */}
-                        <div className="p-3">
+                        <div className="p-4">
                           <h4
                             onClick={() => handleNavigateDetail(movie)}
-                            className="text-xs sm:text-sm font-medium text-white truncate hover:text-dark-purple transition-colors cursor-pointer"
+                            className="text-sm sm:text-base font-bold text-white truncate hover:text-dark-purple transition-colors cursor-pointer"
                             title={movie.title}
                           >
                             {movie.title}
                           </h4>
 
-                          <div className="flex items-center text-light-gray text-[11px] mt-0.5">
+                          <div className="flex items-center gap-2 text-light-gray text-xs mt-1">
                             <span>{movie.year || "N/A"}</span>
+                            <span>•</span>
+                            <span className={isTv ? "text-dark-purple font-medium" : "text-light-gray"}>
+                              {isTv ? "Series" : "Film"}
+                            </span>
                           </div>
 
                           {/* AI Reason */}
-                          <div className="mt-2 text-[10px] text-light-gray/90 bg-white/5 p-2 rounded-lg leading-relaxed line-clamp-2">
-                            <span className="text-dark-purple font-medium mr-1">Why:</span>
+                          <div className="mt-3 text-xs text-light-gray/90 bg-white/5 p-3 rounded-xl leading-relaxed line-clamp-2 border border-white/5">
+                            <span className="text-dark-purple font-semibold mr-1.5">Why CineBot picked this:</span>
                             {movie.reason}
                           </div>
                         </div>
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="p-3 pt-0 grid grid-cols-2 gap-1.5 mt-auto">
+                      <div className="p-4 pt-0 grid grid-cols-2 gap-2 mt-auto">
                         <button
                           type="button"
                           onClick={() => handlePlayTrailer(movie)}
-                          className="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-dark-purple text-[11px] sm:text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          className="py-2 px-3 rounded-xl bg-white/5 hover:bg-dark-purple text-xs text-white font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-white/10 hover:border-dark-purple"
                           title="Watch Trailer"
                         >
-                          <BsFillPlayFill size={12} />
+                          <BsFillPlayFill size={14} />
                           <span>Trailer</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleWatchStream(movie)}
-                          className="py-1.5 px-2 rounded-lg bg-dark-purple hover:bg-deep-purple text-[11px] sm:text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          className="py-2 px-3 rounded-xl bg-dark-purple hover:bg-deep-purple text-xs text-white font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-dark-purple/20"
                           title="Stream on MovieBuddy"
                         >
-                          <FaPlay size={8} />
+                          <FaPlay size={9} />
                           <span>Watch</span>
                         </button>
                       </div>
@@ -611,7 +681,7 @@ const CineBot: React.FC = () => {
         </div>
       </Wrapper>
 
-      {/* Cinematic Theater Trailer Overlay (Opens on click without breaking grid layout) */}
+      {/* Cinematic Theater Trailer Overlay */}
       {activeTrailer && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fadeIn"
@@ -628,7 +698,14 @@ const CineBot: React.FC = () => {
                 <h3 className="text-sm sm:text-base font-bold text-white truncate">
                   {activeTrailer.movie.title}
                 </h3>
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-dark-purple/30 text-dark-purple border border-dark-purple/40">
+                <span
+                  className={classNames(
+                    "hidden sm:inline-block px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider border",
+                    activeTrailer.movie.mediaType === "tv"
+                      ? "bg-dark-purple text-white border-dark-purple"
+                      : "bg-white/10 text-light-gray border-white/20"
+                  )}
+                >
                   {activeTrailer.movie.mediaType === "tv" ? "TV Series" : "Movie"}
                 </span>
               </div>

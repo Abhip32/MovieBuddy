@@ -153,29 +153,53 @@ export const enrichMoviesWithTmdb = async (
   const resolvedList = await Promise.all(
     recommendations.map(async (item) => {
       try {
-        const searchType = item.mediaType === "tv" ? "tv" : "movie";
-        const res = await tmdbApi.search<any>(searchType, item.title);
-        const results = res.data?.results || [];
+        let match: any = null;
+        let actualMediaType: "movie" | "tv" = item.mediaType === "tv" ? "tv" : "movie";
 
-        // Match by title and optionally release year
-        let match = results[0];
-        if (item.year && results.length > 1) {
-          const yearMatch = results.find((r: any) => {
-            const dateStr = r.release_date || r.first_air_date || "";
-            return dateStr.startsWith(item.year || "");
-          });
-          if (yearMatch) match = yearMatch;
+        // Try primary search type first (e.g. tv or movie)
+        const primaryRes = await tmdbApi.search<any>(actualMediaType, item.title);
+        const primaryResults = primaryRes.data?.results || [];
+
+        if (primaryResults.length > 0) {
+          match = primaryResults[0];
+          if (item.year && primaryResults.length > 1) {
+            const yearMatch = primaryResults.find((r: any) => {
+              const dateStr = r.release_date || r.first_air_date || "";
+              return dateStr.startsWith(item.year || "");
+            });
+            if (yearMatch) match = yearMatch;
+          }
+        } else {
+          // If not found in primary type, check alternate type (e.g. was labeled movie but is actually a TV series)
+          const alternateType = actualMediaType === "tv" ? "movie" : "tv";
+          try {
+            const altRes = await tmdbApi.search<any>(alternateType, item.title);
+            const altResults = altRes.data?.results || [];
+            if (altResults.length > 0) {
+              match = altResults[0];
+              actualMediaType = alternateType;
+            }
+          } catch {}
         }
 
         if (match) {
+          const isTv = actualMediaType === "tv" || Boolean(match.first_air_date && !match.release_date);
+          const yearStr = match.first_air_date
+            ? match.first_air_date.slice(0, 4)
+            : match.release_date
+            ? match.release_date.slice(0, 4)
+            : item.year;
+
           return {
             ...item,
+            mediaType: (isTv ? "tv" : "movie") as "movie" | "tv",
             id: match.id,
             posterPath: match.poster_path,
             backdropPath: match.backdrop_path,
             voteAverage: match.vote_average ? Math.round(match.vote_average * 10) / 10 : undefined,
             overview: match.overview,
-            name: match.title || match.name || item.title,
+            name: match.name || match.title || item.title,
+            year: yearStr,
             genreIds: match.genre_ids,
           };
         }
@@ -213,8 +237,9 @@ export const getAiMovieRecommendations = async (
     };
   }
 
-  const systemInstruction = `You are MovieBuddy CineBot, an elite, passionate film critic and cinema curator.
-The user will describe a mood, cinematic vibe, plot concept, or ask for recommendations like a specific film.
+  const systemInstruction = `You are MovieBuddy CineBot, an elite, passionate cinema & television critic and curator.
+The user will describe a mood, cinematic vibe, plot concept, or ask for recommendations like a specific film or series.
+IMPORTANT: MovieBuddy hosts both MOVIES and TV SERIES. Unless the user explicitly specifies only movies or only TV series, you MUST recommend a balanced, exciting mix of both acclaimed Movies ("mediaType": "movie") and binge-worthy TV Series ("mediaType": "tv") that fit the mood (e.g. 3-4 movies and 3-4 TV series).
 Return a STRICT JSON object with NO markdown formatting, matching this exact shape:
 {
   "commentary": "Engaging 1-2 sentence cinema critic intro matching their vibe",
@@ -222,17 +247,17 @@ Return a STRICT JSON object with NO markdown formatting, matching this exact sha
     {
       "title": "Exact Title of Film or TV Series",
       "year": "YYYY",
-      "mediaType": "movie", // or "tv"
-      "reason": "Specific 1-2 sentence explanation of why this movie fits the request",
+      "mediaType": "movie", // MUST be "movie" for feature films, or "tv" for TV series / shows
+      "reason": "Specific 1-2 sentence explanation of why this movie/series fits the request",
       "vibeTags": ["Genre/Vibe 1", "Genre/Vibe 2"]
     }
   ]
 }
-Recommend 6 to 8 recognizable, acclaimed or cult classic movies/series that truly capture the mood. Include a mix of modern and iconic classics.`;
+Recommend 6 to 8 recognizable, acclaimed or cult classic titles that truly capture the mood. Always include a healthy mix of both Movies and TV Series.`;
 
   const userQuery = contextItem
-    ? `Currently viewing: "${contextItem.title || contextItem.name}" (${contextItem.mediaType || "film"}). User request: "${cleanPrompt || "recommend deeply similar films and vibe matches"}"`
-    : `Curate movies for: "${cleanPrompt || "mind-bending sci-fi thrillers"}"`;
+    ? `Currently viewing: "${contextItem.title || contextItem.name}" (${contextItem.mediaType || "film"}). User request: "${cleanPrompt || "recommend deeply similar films and series matches"}"`
+    : `Curate a balanced mix of movies and TV series for: "${cleanPrompt || "mind-bending sci-fi thrillers"}"`;
 
   try {
     const response = await fetch(
