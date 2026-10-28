@@ -4,6 +4,7 @@ import { IoSparkles, IoClose } from "react-icons/io5";
 import { BsFillPlayFill, BsFillPlayCircleFill } from "react-icons/bs";
 import { AiTwotoneStar } from "react-icons/ai";
 import { FaKey, FaPlay } from "react-icons/fa";
+import { HiArrowPath } from "react-icons/hi2";
 import Wrapper from "../../components/Wrapper/Wrapper";
 import {
   getAiMovieRecommendations,
@@ -51,6 +52,41 @@ const CURATED_THEMES = [
   },
 ];
 
+interface ActiveTrailerData {
+  movie: AiMovieRecommendation;
+  videoUrl: string | null;
+  loading: boolean;
+  error: string | null;
+}
+
+// Frontend Session Storage Caching
+const SESSION_CACHE_KEY = "moviebuddy_cinebot_session_v1";
+
+interface SessionCacheEntry {
+  commentary: string;
+  movies: AiMovieRecommendation[];
+  timestamp: number;
+}
+
+interface SessionCacheStore {
+  lastQuery: string;
+  queries: Record<string, SessionCacheEntry>;
+}
+
+const getSessionStore = (): SessionCacheStore => {
+  try {
+    const raw = sessionStorage.getItem(SESSION_CACHE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { lastQuery: "", queries: {} };
+};
+
+const saveSessionStore = (store: SessionCacheStore) => {
+  try {
+    sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(store));
+  } catch {}
+};
+
 const CineBot: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,16 +95,12 @@ const CineBot: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [commentary, setCommentary] = useState("");
   const [movies, setMovies] = useState<AiMovieRecommendation[]>([]);
+  const [isCached, setIsCached] = useState(false);
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [apiKey, setApiKey] = useState("");
 
-  // In-Place Active Trailer Player State
-  const [activeTrailer, setActiveTrailer] = useState<{
-    movieTitle: string;
-    videoUrl: string | null;
-    loading: boolean;
-    error: string | null;
-  } | null>(null);
+  // Theater Overlay Trailer Player State (does not break grid)
+  const [activeTrailer, setActiveTrailer] = useState<ActiveTrailerData | null>(null);
 
   // Restore saved API key
   useEffect(() => {
@@ -89,25 +121,52 @@ const CineBot: React.FC = () => {
     } catch {}
   };
 
-  const handleCurate = async (targetPrompt?: string) => {
+  const handleCurate = async (targetPrompt?: string, forceFresh: boolean = false) => {
     const activeQuery = targetPrompt !== undefined ? targetPrompt : prompt;
-    if (!activeQuery.trim()) return;
+    const cleanQuery = activeQuery.trim();
+    if (!cleanQuery) return;
 
-    setLoading(true);
+    const queryKey = cleanQuery.toLowerCase();
     setActiveTrailer(null);
 
-    // Sync query param
-    setSearchParams({ q: activeQuery.trim() });
+    // Sync query param in URL
+    setSearchParams({ q: cleanQuery });
+
+    // Check Session Cache unless query changed or user explicitly requested fresh fetch
+    const store = getSessionStore();
+    if (!forceFresh && store.queries[queryKey]) {
+      const cached = store.queries[queryKey];
+      setPrompt(cleanQuery);
+      setCommentary(cached.commentary);
+      setMovies(cached.movies);
+      setIsCached(true);
+      store.lastQuery = cleanQuery;
+      saveSessionStore(store);
+      return;
+    }
+
+    // Query changed or not in session cache -> fetch fresh from Gemini & TMDB
+    setLoading(true);
+    setIsCached(false);
 
     try {
       const res = await getAiMovieRecommendations(
-        activeQuery.trim(),
+        cleanQuery,
         undefined,
         apiKey
       );
 
       setCommentary(res.commentary);
       setMovies(res.movies);
+
+      // Save to Session Storage
+      store.lastQuery = cleanQuery;
+      store.queries[queryKey] = {
+        commentary: res.commentary,
+        movies: res.movies,
+        timestamp: Date.now(),
+      };
+      saveSessionStore(store);
     } catch (e) {
       console.error("CineBot curation error:", e);
     } finally {
@@ -115,37 +174,52 @@ const CineBot: React.FC = () => {
     }
   };
 
-  // If URL has ?q=... on load, curate automatically
+  // On mount: restore from session cache unless query param in URL says otherwise
   useEffect(() => {
-    const query = searchParams.get("q");
-    if (query && query !== prompt) {
-      setPrompt(query);
-      handleCurate(query);
+    const queryParam = searchParams.get("q");
+    const store = getSessionStore();
+
+    if (queryParam) {
+      const queryKey = queryParam.trim().toLowerCase();
+      if (store.queries[queryKey]) {
+        // Instant restore from session cache without re-fetching
+        setPrompt(queryParam);
+        setCommentary(store.queries[queryKey].commentary);
+        setMovies(store.queries[queryKey].movies);
+        setIsCached(true);
+        store.lastQuery = queryParam;
+        saveSessionStore(store);
+      } else {
+        setPrompt(queryParam);
+        handleCurate(queryParam);
+      }
+    } else if (store.lastQuery && store.queries[store.lastQuery.toLowerCase()]) {
+      // Re-visiting /cinebot during the same session: restore the last AI result instantly!
+      const lastKey = store.lastQuery.toLowerCase();
+      const lastCached = store.queries[lastKey];
+      setPrompt(store.lastQuery);
+      setCommentary(lastCached.commentary);
+      setMovies(lastCached.movies);
+      setIsCached(true);
+      setSearchParams({ q: store.lastQuery });
     }
   }, []);
 
-  // Smooth scroll active trailer into view when expanded
+  // Close trailer overlay on Escape key
   useEffect(() => {
-    if (activeTrailer?.movieTitle) {
-      const cardEl = document.getElementById(
-        `cinebot-card-${encodeURIComponent(activeTrailer.movieTitle)}`
-      );
-      if (cardEl) {
-        cardEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && activeTrailer) {
+        setActiveTrailer(null);
       }
-    }
-  }, [activeTrailer?.movieTitle]);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeTrailer]);
 
   // Play Trailer Handler
   const handlePlayTrailer = async (movie: AiMovieRecommendation) => {
-    // If clicking same trailer, toggle it off
-    if (activeTrailer?.movieTitle === movie.title && !activeTrailer.loading) {
-      setActiveTrailer(null);
-      return;
-    }
-
     setActiveTrailer({
-      movieTitle: movie.title,
+      movie,
       videoUrl: null,
       loading: true,
       error: null,
@@ -163,7 +237,7 @@ const CineBot: React.FC = () => {
         const trailer = videos.find(
           (v: any) => v.site === "YouTube" && v.type === "Trailer"
         );
-        // 2. Any YouTube clip
+        // 2. Any YouTube clip fallback
         const fallback = videos.find((v: any) => v.site === "YouTube");
 
         trailerKey = (trailer || fallback)?.key || null;
@@ -171,7 +245,7 @@ const CineBot: React.FC = () => {
 
       if (trailerKey) {
         setActiveTrailer({
-          movieTitle: movie.title,
+          movie,
           videoUrl: `https://www.youtube.com/embed/${trailerKey}?autoplay=1&rel=0&modestbranding=1`,
           loading: false,
           error: null,
@@ -179,7 +253,7 @@ const CineBot: React.FC = () => {
       } else {
         const query = encodeURIComponent(`${movie.title} official trailer`);
         setActiveTrailer({
-          movieTitle: movie.title,
+          movie,
           videoUrl: `https://www.youtube.com/embed?listType=search&list=${query}&autoplay=1`,
           loading: false,
           error: null,
@@ -189,7 +263,7 @@ const CineBot: React.FC = () => {
       console.warn("Could not load trailer for:", movie.title);
       const query = encodeURIComponent(`${movie.title} official trailer`);
       setActiveTrailer({
-        movieTitle: movie.title,
+        movie,
         videoUrl: `https://www.youtube.com/embed?listType=search&list=${query}&autoplay=1`,
         loading: false,
         error: null,
@@ -198,6 +272,7 @@ const CineBot: React.FC = () => {
   };
 
   const handleNavigateDetail = (movie: AiMovieRecommendation) => {
+    setActiveTrailer(null);
     const cleanTitle = encodeURIComponent(
       (movie.name || movie.title || "detail").toLowerCase()
     ).replace(/%20/g, "-");
@@ -206,6 +281,7 @@ const CineBot: React.FC = () => {
   };
 
   const handleWatchStream = (movie: AiMovieRecommendation) => {
+    setActiveTrailer(null);
     const type = movie.mediaType === "tv" ? "tv" : "movie";
     navigate(`/stream/${type}/${movie.id || 0}`);
   };
@@ -273,7 +349,7 @@ const CineBot: React.FC = () => {
         </div>
 
         {/* Hero Search Bar */}
-        <div className="max-w-3xl mx-auto mb-6 relative z-10">
+        <div className="max-w-3xl mx-auto mb-8 relative z-10">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -401,181 +477,64 @@ const CineBot: React.FC = () => {
             <div className="space-y-6">
               {/* Commentary Banner */}
               {commentary && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-dark-purple/20 via-black-2 to-black-2 border border-dark-purple/40 flex items-start gap-3.5 shadow-lg">
-                  <span className="text-xl text-dark-purple flex-shrink-0">🎬</span>
-                  <div>
-                    <h4 className="text-xs uppercase font-semibold text-dark-purple tracking-wider mb-0.5">
-                      Curator Commentary
-                    </h4>
-                    <p className="text-xs sm:text-sm text-white/90 leading-relaxed italic">
-                      &ldquo;{commentary}&rdquo;
-                    </p>
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-dark-purple/20 via-black-2 to-black-2 border border-dark-purple/40 flex items-start justify-between gap-3.5 shadow-lg">
+                  <div className="flex items-start gap-3.5 min-w-0">
+                    <span className="text-xl text-dark-purple flex-shrink-0">🎬</span>
+                    <div>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h4 className="text-xs uppercase font-semibold text-dark-purple tracking-wider">
+                          Curator Commentary
+                        </h4>
+                        {isCached && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/10 text-light-gray border border-white/10">
+                            ⚡ Session Cached
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm text-white/90 leading-relaxed italic">
+                        &ldquo;{commentary}&rdquo;
+                      </p>
+                    </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCurate(prompt, true)}
+                    title="Re-curate fresh recommendations for this query"
+                    className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-xs text-light-gray hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 flex-shrink-0 border border-white/10 hover:border-dark-purple"
+                  >
+                    <HiArrowPath className="text-dark-purple text-xs" />
+                    <span className="hidden sm:inline">Re-curate</span>
+                  </button>
                 </div>
               )}
 
-              {/* Cards Grid: 1 col on mobile, 2 on sm, 3 on md, 4 on lg */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+              {/* Standard Proportional MovieBuddy Cards Grid: 2 cols mobile, 3-4 tablet, 5-6 desktop */}
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
                 {movies.map((movie, idx) => {
-                  const isTrailerActive = activeTrailer?.movieTitle === movie.title;
-
-                  // Netflix-style In-Place Trailer Preview: spans row, trailer & details take both places, other cards go down
-                  if (isTrailerActive) {
-                    return (
-                      <div
-                        id={`cinebot-card-${encodeURIComponent(movie.title)}`}
-                        key={movie.id || idx}
-                        className="col-span-full rounded-2xl bg-gradient-to-br from-black-2 via-[#141414] to-black border border-dark-purple/50 shadow-[0_8px_30px_rgba(179,0,255,0.2)] overflow-hidden transition-all duration-300 animate-fadeIn"
-                      >
-                        <div className="flex flex-col lg:flex-row items-stretch">
-                          {/* Left: 16:9 Trailer Video Player */}
-                          <div className="relative w-full lg:w-3/5 aspect-video bg-black flex-shrink-0 flex items-center justify-center border-b lg:border-b-0 lg:border-r border-white/10">
-                            {activeTrailer.loading ? (
-                              <div className="flex flex-col items-center justify-center gap-2 p-6 text-light-gray text-xs">
-                                <span className="w-8 h-8 border-2 border-dark-purple border-t-transparent rounded-full animate-spin" />
-                                <span className="text-white font-medium">Loading trailer...</span>
-                              </div>
-                            ) : activeTrailer.videoUrl ? (
-                              <iframe
-                                src={activeTrailer.videoUrl}
-                                title={`${activeTrailer.movieTitle} Trailer`}
-                                allow="autoplay; encrypted-media; picture-in-picture"
-                                allowFullScreen
-                                className="w-full h-full border-0"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center p-6 text-xs text-light-gray">
-                                <span>No video trailer available.</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Right: Movie Details & Actions */}
-                          <div className="flex-1 p-4 sm:p-6 flex flex-col justify-between">
-                            <div>
-                              {/* Top Badges & Close Button */}
-                              <div className="flex items-start justify-between gap-3 mb-2">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-dark-purple/30 text-dark-purple border border-dark-purple/50">
-                                    {movie.mediaType === "tv" ? "TV Series" : "Movie"}
-                                  </span>
-                                  {movie.year && (
-                                    <span className="text-xs text-light-gray font-light">
-                                      {movie.year}
-                                    </span>
-                                  )}
-                                  {typeof movie.voteAverage === "number" && movie.voteAverage > 0 && (
-                                    <span className="flex items-center gap-1 text-xs text-amber-400 bg-black/60 px-2 py-0.5 rounded border border-white/10">
-                                      <AiTwotoneStar size={12} />
-                                      <span>{movie.voteAverage.toFixed(1)}</span>
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Close Trailer Button */}
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveTrailer(null)}
-                                  title="Close trailer preview"
-                                  className="p-1.5 rounded-lg bg-white/10 hover:bg-dark-purple text-light-gray hover:text-white transition-colors cursor-pointer flex-shrink-0"
-                                >
-                                  <IoClose size={18} />
-                                </button>
-                              </div>
-
-                              {/* Title */}
-                              <h3
-                                onClick={() => handleNavigateDetail(movie)}
-                                className="text-base sm:text-xl font-bold text-white hover:text-dark-purple transition-colors cursor-pointer"
-                                title={movie.title}
-                              >
-                                {movie.title}
-                              </h3>
-
-                              {/* AI Reason */}
-                              <div className="mt-2.5 p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-light-gray leading-relaxed">
-                                <span className="text-dark-purple font-semibold mr-1.5">Why CineBot picked this:</span>
-                                {movie.reason}
-                              </div>
-
-                              {/* Overview if present */}
-                              {movie.overview && (
-                                <p className="mt-2 text-xs text-light-gray/80 line-clamp-2 sm:line-clamp-3 leading-relaxed">
-                                  {movie.overview}
-                                </p>
-                              )}
-                            </div>
-
-                            {/* Actions Row */}
-                            <div className="flex items-center gap-2.5 mt-4 pt-3 border-t border-white/10">
-                              <button
-                                type="button"
-                                onClick={() => handleWatchStream(movie)}
-                                className="flex-1 py-2 sm:py-2.5 px-4 rounded-xl bg-dark-purple hover:bg-deep-purple font-medium text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-dark-purple/20"
-                              >
-                                <FaPlay size={11} />
-                                <span>Watch Stream</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleNavigateDetail(movie)}
-                                className="py-2 sm:py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 font-medium text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                              >
-                                <span>More Info</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setActiveTrailer(null)}
-                                className="py-2 sm:py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-light-gray hover:text-white transition-colors cursor-pointer"
-                                title="Minimize trailer"
-                              >
-                                Close
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  // Inactive / Normal Card
                   const posterImg = movie.posterPath
                     ? originalImage(movie.posterPath, 400)
                     : movie.backdropPath
                     ? originalImage(movie.backdropPath, 500)
                     : "/images/no-image.jpg";
-                  const backdropImg = movie.backdropPath
-                    ? originalImage(movie.backdropPath, 500)
-                    : posterImg;
 
                   return (
                     <div
-                      id={`cinebot-card-${encodeURIComponent(movie.title)}`}
                       key={movie.id || idx}
-                      className="card group flex flex-col justify-between rounded-xl bg-black-2 border border-white/10 hover:border-dark-purple/50 transition-all duration-300 overflow-hidden shadow-lg"
+                      className="card group flex flex-col justify-between rounded-xl bg-black-2 border border-white/10 hover:border-dark-purple/60 transition-all duration-300 overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1"
                     >
                       <div>
-                        {/* Movie Visual: Wide 16:9 on mobile (1 card per row), 2:3 vertical poster on sm+ */}
+                        {/* Standard Proportional Poster Image */}
                         <div
                           onClick={() => handlePlayTrailer(movie)}
-                          className="relative aspect-video sm:aspect-2/3 w-full overflow-hidden bg-black cursor-pointer"
-                          title="Click to play trailer"
+                          className="relative aspect-[2/3] w-full overflow-hidden bg-black cursor-pointer rounded-t-xl"
+                          title="Click to watch trailer"
                         >
-                          <img
-                            src={backdropImg}
-                            alt={movie.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 block sm:hidden"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src =
-                                "https://www.movienewz.com/img/films/poster-holder.jpg";
-                            }}
-                          />
                           <img
                             src={posterImg}
                             alt={movie.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 hidden sm:block"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src =
                                 "https://www.movienewz.com/img/films/poster-holder.jpg";
@@ -594,13 +553,13 @@ const CineBot: React.FC = () => {
                           </div>
 
                           {/* Center Hover Play Circle matching Card.tsx */}
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full text-dark-purple text-[36px] flex scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-xl">
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full text-dark-purple text-3xl sm:text-4xl flex items-center justify-center scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-xl pointer-events-none">
                             <BsFillPlayCircleFill />
                           </div>
                         </div>
 
                         {/* Card Info */}
-                        <div className="p-3.5">
+                        <div className="p-3">
                           <h4
                             onClick={() => handleNavigateDetail(movie)}
                             className="text-xs sm:text-sm font-medium text-white truncate hover:text-dark-purple transition-colors cursor-pointer"
@@ -622,24 +581,24 @@ const CineBot: React.FC = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="p-3.5 pt-0 grid grid-cols-2 gap-2 mt-auto">
+                      <div className="p-3 pt-0 grid grid-cols-2 gap-1.5 mt-auto">
                         <button
                           type="button"
                           onClick={() => handlePlayTrailer(movie)}
-                          className="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-dark-purple text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          className="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-dark-purple text-[11px] sm:text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
                           title="Watch Trailer"
                         >
-                          <BsFillPlayFill size={13} />
+                          <BsFillPlayFill size={12} />
                           <span>Trailer</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleWatchStream(movie)}
-                          className="py-1.5 px-2 rounded-lg bg-dark-purple hover:bg-deep-purple text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          className="py-1.5 px-2 rounded-lg bg-dark-purple hover:bg-deep-purple text-[11px] sm:text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
                           title="Stream on MovieBuddy"
                         >
-                          <FaPlay size={9} />
+                          <FaPlay size={8} />
                           <span>Watch</span>
                         </button>
                       </div>
@@ -651,6 +610,105 @@ const CineBot: React.FC = () => {
           )}
         </div>
       </Wrapper>
+
+      {/* Cinematic Theater Trailer Overlay (Opens on click without breaking grid layout) */}
+      {activeTrailer && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-fadeIn"
+          onClick={() => setActiveTrailer(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl rounded-2xl bg-[#0f0f0f] border border-white/15 shadow-[0_10px_50px_rgba(0,0,0,0.95)] overflow-hidden text-white"
+          >
+            {/* Top Bar with Title & Close button */}
+            <div className="flex items-center justify-between p-3.5 sm:p-4 bg-black-2 border-b border-white/10">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-dark-purple animate-ping flex-shrink-0" />
+                <h3 className="text-sm sm:text-base font-bold text-white truncate">
+                  {activeTrailer.movie.title}
+                </h3>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-dark-purple/30 text-dark-purple border border-dark-purple/40">
+                  {activeTrailer.movie.mediaType === "tv" ? "TV Series" : "Movie"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveTrailer(null)}
+                title="Close Trailer"
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-dark-purple text-light-gray hover:text-white transition-colors cursor-pointer flex-shrink-0"
+              >
+                <IoClose size={20} />
+              </button>
+            </div>
+
+            {/* Video Player Area */}
+            <div className="relative aspect-video w-full bg-black">
+              {activeTrailer.loading ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-xs text-light-gray">
+                  <span className="w-8 h-8 border-2 border-dark-purple border-t-transparent rounded-full animate-spin" />
+                  <span>Loading trailer...</span>
+                </div>
+              ) : activeTrailer.videoUrl ? (
+                <iframe
+                  src={activeTrailer.videoUrl}
+                  title={`${activeTrailer.movie.title} Trailer`}
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-light-gray">
+                  No video trailer available for this title.
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Details & Direct Stream Actions */}
+            <div className="p-4 sm:p-5 bg-black-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-white/10">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                  {activeTrailer.movie.voteAverage && (
+                    <span className="flex items-center gap-1 text-xs text-amber-400 bg-black px-2 py-0.5 rounded border border-white/10">
+                      <AiTwotoneStar size={11} />
+                      <span>{activeTrailer.movie.voteAverage.toFixed(1)}</span>
+                    </span>
+                  )}
+                  {activeTrailer.movie.year && (
+                    <span className="text-xs text-light-gray">
+                      {activeTrailer.movie.year}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-light-gray line-clamp-2 leading-relaxed">
+                  <span className="text-dark-purple font-semibold mr-1">Why CineBot picked this:</span>
+                  {activeTrailer.movie.reason}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleWatchStream(activeTrailer.movie)}
+                  className="flex-1 sm:flex-none py-2 px-4 rounded-xl bg-dark-purple hover:bg-deep-purple font-medium text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-dark-purple/20"
+                >
+                  <FaPlay size={10} />
+                  <span>Watch Stream</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleNavigateDetail(activeTrailer.movie)}
+                  className="py-2 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs sm:text-sm text-white transition-colors cursor-pointer"
+                >
+                  Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
