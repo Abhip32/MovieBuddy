@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import tmdbApi, { TmdbMediaType } from '../../services/tmdbApi';
-import { FaUsers } from 'react-icons/fa';
+import { FaUsers, FaCrown } from 'react-icons/fa';
+import { IoPeople, IoClose } from 'react-icons/io5';
 import {
   WatchPartySession,
   generateRoomCode,
@@ -39,6 +40,15 @@ const Streaming: React.FC = () => {
   const [selectedEpisode, setSelectedEpisode] = useState<string>(episode || '1');
   const [partySession, setPartySession] = useState<WatchPartySession | null>(null);
 
+  // User name entry states
+  const [activeUserName, setActiveUserName] = useState<string>(
+    () => localStorage.getItem('moviebuddy_party_username') || ''
+  );
+  const [guestNameInput, setGuestNameInput] = useState<string>('');
+  const [showHostNameModal, setShowHostNameModal] = useState<boolean>(false);
+  const [hostNameInput, setHostNameInput] = useState<string>('');
+  const [joinNameError, setJoinNameError] = useState<string>('');
+
   useEffect(() => {
     if (season) setSelectedSeason(season);
     if (episode) setSelectedEpisode(episode);
@@ -46,22 +56,22 @@ const Streaming: React.FC = () => {
 
   // Watch Party session initialization
   useEffect(() => {
-    if (!partyCode) {
+    if (!partyCode || !activeUserName.trim()) {
       setPartySession(null);
       return;
     }
 
-    const savedName =
-      localStorage.getItem('moviebuddy_party_username') ||
-      (isHostParam ? 'Host' : 'MovieFan');
-
-    const session = new WatchPartySession(partyCode, savedName, isHostParam);
+    const session = new WatchPartySession(
+      partyCode,
+      activeUserName.trim(),
+      isHostParam
+    );
     setPartySession(session);
 
     return () => {
       session.destroy();
     };
-  }, [partyCode, isHostParam]);
+  }, [partyCode, isHostParam, activeUserName]);
 
   const fetchContent = useCallback(async () => {
     if (!id || (type !== 'movie' && type !== 'tv')) return;
@@ -144,12 +154,48 @@ const Streaming: React.FC = () => {
     }, 50);
   };
 
-  const handleStartWatchParty = () => {
+  const handleStartWatchPartyClick = () => {
+    const saved = localStorage.getItem('moviebuddy_party_username');
+    if (saved && saved.trim()) {
+      launchPartyAsHost(saved.trim());
+    } else {
+      setHostNameInput('');
+      setShowHostNameModal(true);
+    }
+  };
+
+  const launchPartyAsHost = (name: string) => {
+    try {
+      localStorage.setItem('moviebuddy_party_username', name);
+    } catch {}
+    setActiveUserName(name);
+    setShowHostNameModal(false);
+
     const newRoom = generateRoomCode();
     const newParams = new URLSearchParams(searchParams);
     newParams.set('party', newRoom);
     newParams.set('host', 'true');
     setSearchParams(newParams);
+  };
+
+  const handleConfirmHostModal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!hostNameInput.trim()) return;
+    launchPartyAsHost(hostNameInput.trim());
+  };
+
+  const handleJoinPartySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = guestNameInput.trim();
+    if (!trimmed) {
+      setJoinNameError('Please enter your name to join');
+      return;
+    }
+    setJoinNameError('');
+    try {
+      localStorage.setItem('moviebuddy_party_username', trimmed);
+    } catch {}
+    setActiveUserName(trimmed);
   };
 
   const handleLeaveParty = () => {
@@ -181,16 +227,65 @@ const Streaming: React.FC = () => {
     );
   }
 
+  const isPartyActiveOrPending = Boolean(partyCode);
+
   return (
     <div className="p-4 sm:p-6 md:p-10 min-h-screen bg-black text-white">
+      {/* Host Name Modal */}
+      {showHostNameModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-black-2 border border-white/15 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative animate-fadeIn">
+            <button
+              onClick={() => setShowHostNameModal(false)}
+              className="absolute top-4 right-4 text-light-gray hover:text-white cursor-pointer"
+            >
+              <IoClose size={20} />
+            </button>
+            <div className="w-10 h-10 rounded-xl bg-dark-purple/20 text-dark-purple flex items-center justify-center mb-3">
+              <FaCrown size={20} />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-1">Host Watch Party</h3>
+            <p className="text-xs text-light-gray mb-4">
+              Enter your name so your friends know who is hosting.
+            </p>
+            <form onSubmit={handleConfirmHostModal} className="space-y-3">
+              <input
+                type="text"
+                value={hostNameInput}
+                onChange={(e) => setHostNameInput(e.target.value)}
+                placeholder="Enter your name (e.g. Alex)..."
+                maxLength={24}
+                autoFocus
+                className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-white/20 text-sm text-white focus:outline-none focus:border-dark-purple"
+              />
+              <button
+                type="submit"
+                disabled={!hostNameInput.trim()}
+                className="w-full py-2.5 rounded-xl bg-dark-purple hover:bg-deep-purple font-semibold text-sm text-white transition-colors cursor-pointer disabled:opacity-40"
+              >
+                Start Party
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div
         className={`mt-16 sm:mt-20 mx-auto ${
-          partySession ? 'max-w-[1600px]' : 'max-w-6xl'
+          isPartyActiveOrPending ? 'max-w-[1600px]' : 'max-w-6xl'
         }`}
       >
-        <div className={partySession ? 'grid grid-cols-1 lg:grid-cols-12 gap-6' : ''}>
+        <div
+          className={
+            isPartyActiveOrPending ? 'grid grid-cols-1 lg:grid-cols-12 gap-6' : ''
+          }
+        >
           {/* Main Player Column */}
-          <div className={partySession ? 'lg:col-span-8 xl:col-span-8' : ''}>
+          <div
+            className={
+              isPartyActiveOrPending ? 'lg:col-span-8 xl:col-span-8' : ''
+            }
+          >
             <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-5 flex flex-wrap items-center gap-2">
               <span>{content.name || content.title}</span>
               {type === 'tv' && (
@@ -204,15 +299,15 @@ const Streaming: React.FC = () => {
             <div className="mb-6 flex flex-wrap items-center gap-3">
               <button
                 onClick={handleReloadStream}
-                className="px-4 py-2 rounded transition text-sm sm:text-base bg-purple-600 hover:bg-purple-700 font-medium"
+                className="px-4 py-2 rounded transition text-sm sm:text-base bg-purple-600 hover:bg-purple-700 font-medium cursor-pointer"
               >
                 Stream 1
               </button>
 
-              {!partySession ? (
+              {!partyCode ? (
                 <button
                   type="button"
-                  onClick={handleStartWatchParty}
+                  onClick={handleStartWatchPartyClick}
                   className="px-4 py-2 rounded transition text-sm sm:text-base bg-gradient-to-r from-dark-purple to-[#8a00c2] hover:opacity-90 font-medium flex items-center gap-2 border border-purple-400/30 shadow-[0_0_15px_rgba(179,0,255,0.3)] cursor-pointer"
                 >
                   <FaUsers size={16} />
@@ -222,7 +317,7 @@ const Streaming: React.FC = () => {
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dark-purple/20 border border-dark-purple/50 text-xs text-purple-200">
                   <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span>
-                    Party Active: <strong className="font-mono text-white">{partyCode}</strong>
+                    Party Room: <strong className="font-mono text-white">{partyCode}</strong>
                   </span>
                 </div>
               )}
@@ -295,15 +390,67 @@ const Streaming: React.FC = () => {
             )}
           </div>
 
-          {/* Watch Party Dock Column */}
-          {partySession && (
+          {/* Watch Party Side Dock Column */}
+          {partyCode && (
             <div className="lg:col-span-4 xl:col-span-4 flex flex-col h-[580px] lg:h-[calc(100vh-140px)] sticky top-20">
-              <WatchPartyDock
-                session={partySession}
-                currentContentTitle={content.name || content.title || 'Movie'}
-                onLeave={handleLeaveParty}
-                onSyncWithHost={handleSyncWithHost}
-              />
+              {partySession ? (
+                <WatchPartyDock
+                  session={partySession}
+                  currentContentTitle={content.name || content.title || 'Movie'}
+                  onLeave={handleLeaveParty}
+                  onSyncWithHost={handleSyncWithHost}
+                />
+              ) : (
+                /* Prompt user to enter name before joining party session */
+                <div className="flex flex-col items-center justify-center p-6 sm:p-8 bg-black-2 border border-white/10 rounded-2xl text-center h-full shadow-2xl">
+                  <div className="w-14 h-14 rounded-2xl bg-dark-purple/20 text-dark-purple border border-dark-purple/40 flex items-center justify-center mb-4">
+                    <IoPeople size={28} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1.5">
+                    Join Watch Party
+                  </h3>
+                  <p className="text-xs text-light-gray max-w-xs mb-5 leading-relaxed">
+                    You have an invite to party <strong className="text-purple-300 font-mono">#{partyCode}</strong>. Enter your name to join the live chat and stay in sync.
+                  </p>
+
+                  <form onSubmit={handleJoinPartySubmit} className="w-full max-w-xs space-y-3.5">
+                    <div>
+                      <input
+                        type="text"
+                        value={guestNameInput}
+                        onChange={(e) => {
+                          setGuestNameInput(e.target.value);
+                          if (joinNameError) setJoinNameError('');
+                        }}
+                        placeholder="Enter your name or nickname..."
+                        maxLength={24}
+                        autoFocus
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-white/20 text-xs sm:text-sm text-white placeholder-light-gray/50 focus:outline-none focus:border-dark-purple transition-colors"
+                      />
+                      {joinNameError && (
+                        <p className="text-[11px] text-red-400 mt-1 text-left">
+                          {joinNameError}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-2.5 px-4 rounded-xl bg-dark-purple hover:bg-deep-purple font-semibold text-xs sm:text-sm text-white transition-colors cursor-pointer shadow-lg shadow-dark-purple/30"
+                    >
+                      Enter Watch Party
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleLeaveParty}
+                      className="text-xs text-light-gray hover:text-white transition-colors cursor-pointer block mx-auto underline pt-1"
+                    >
+                      Watch Solo Instead
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           )}
         </div>

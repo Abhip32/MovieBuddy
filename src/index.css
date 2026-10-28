@@ -11,7 +11,7 @@
 }
 
 .header .menu{
-    @apply -translate-x-full  z-50 opacity-0 duration-300 md:opacity-100 md:translate-x-0 flex fixed flex-col h-[100vh] md:h-auto bg-black md:bg-transparent top-0 left-0 justify-center items-center gap-12 w-60 md:static  md:flex-row md:gap-4  md:ml-8;
+    @apply -translate-x-full z-50 opacity-0 duration-300 md:opacity-100 md:translate-x-0 flex fixed flex-col h-[100vh] md:h-auto bg-black md:bg-transparent top-0 left-0 justify-center items-center gap-12 w-60 md:w-auto md:static md:flex-row md:gap-6 md:ml-8;
 }
 
 .header .menu.active{
@@ -19,7 +19,7 @@
 }
 
 .menu-items{
-    @apply text-white md:text-white font-medium md:font-bold hover:text-dark-purple transition-colors duration-300 ease-out cursor-pointer text-[16px];
+    @apply text-white md:text-white font-medium md:font-bold hover:text-dark-purple transition-colors duration-300 ease-out cursor-pointer text-[15px] whitespace-nowrap;
 }   
 .menu-items.active{
     @apply text-dark-purple;

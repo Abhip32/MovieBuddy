@@ -321,6 +321,36 @@ export class WatchPartySession {
     });
   }
 
+  public setUserName(newName: string) {
+    const oldName = this.user.name;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+
+    this.user.name = trimmed;
+    this.participants.set(this.user.id, this.user);
+    this.onParticipantsChange(Array.from(this.participants.values()));
+
+    try {
+      localStorage.setItem("moviebuddy_party_username", trimmed);
+    } catch {}
+
+    const msg: PartyChatMessage = {
+      id: "sys_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+      senderId: "system",
+      senderName: "System",
+      avatarColor: "#888",
+      text: `${oldName} changed their name to ${trimmed}`,
+      timestamp: Date.now(),
+      isSystem: true,
+    };
+
+    this.onMessage(msg);
+    this.broadcast({
+      type: "CHAT",
+      message: msg,
+    });
+  }
+
   public leave() {
     try {
       this.broadcastChannel?.close();

@@ -5,9 +5,8 @@ import {
   IoCheckmark,
   IoClose,
   IoPeople,
-  IoSparkles,
 } from "react-icons/io5";
-import { FaCrown, FaUsers } from "react-icons/fa";
+import { FaCrown } from "react-icons/fa";
 import {
   WatchPartySession,
   PartyChatMessage,
@@ -27,7 +26,6 @@ const QUICK_EMOJIS = ["🍿", "🔥", "❤️", "😂", "😱", "👏"];
 
 export const WatchPartyDock: React.FC<WatchPartyDockProps> = ({
   session,
-  currentContentTitle,
   onLeave,
   onSyncWithHost,
 }) => {
@@ -39,6 +37,11 @@ export const WatchPartyDock: React.FC<WatchPartyDockProps> = ({
   const [showMembersList, setShowMembersList] = useState(false);
   const [hostSyncNotice, setHostSyncNotice] = useState<PartySyncState | null>(null);
 
+  // Rename states
+  const [currentName, setCurrentName] = useState(session.user.name);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(session.user.name);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export const WatchPartyDock: React.FC<WatchPartyDockProps> = ({
         senderId: "system",
         senderName: "System",
         avatarColor: "#888",
-        text: `Welcome to the Watch Party! Room: ${session.roomId}. Share the link to invite friends. 🍿`,
+        text: `Welcome to Watch Party! Room: ${session.roomId}. Share the code to invite friends. 🍿`,
         timestamp: Date.now(),
         isSystem: true,
       },
@@ -102,6 +105,16 @@ export const WatchPartyDock: React.FC<WatchPartyDockProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSaveRename = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = nameInput.trim();
+    if (trimmed) {
+      session.setUserName(trimmed);
+      setCurrentName(trimmed);
+      setIsEditingName(false);
+    }
+  };
+
   return (
     <>
       {/* Floating Reaction Bursts (Rendered across video/screen) */}
@@ -136,9 +149,51 @@ export const WatchPartyDock: React.FC<WatchPartyDockProps> = ({
                 )}
               </h3>
             </div>
-            <p className="text-[11px] text-light-gray truncate max-w-[180px] mt-0.5">
-              Room: <span className="text-purple-300 font-mono font-bold tracking-wider">{session.roomId}</span>
-            </p>
+
+            {/* Room Code & Editable Nickname */}
+            <div className="flex items-center gap-2 text-[11px] text-light-gray mt-1 flex-wrap">
+              <span>
+                Room: <strong className="text-purple-300 font-mono font-semibold">{session.roomId}</strong>
+              </span>
+              <span>•</span>
+              {isEditingName ? (
+                <form onSubmit={handleSaveRename} className="inline-flex items-center gap-1">
+                  <input
+                    type="text"
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    className="w-24 px-1.5 py-0.5 bg-black border border-dark-purple rounded text-[11px] text-white focus:outline-none"
+                    autoFocus
+                  />
+                  <button type="submit" title="Save Name" className="text-green-400 hover:text-green-300 cursor-pointer">
+                    <IoCheckmark size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNameInput(currentName);
+                      setIsEditingName(false);
+                    }}
+                    title="Cancel"
+                    className="text-red-400 hover:text-red-300 cursor-pointer"
+                  >
+                    <IoClose size={14} />
+                  </button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingName(true)}
+                  title="Click to edit your display name"
+                  className="inline-flex items-center gap-1 hover:text-white transition-colors cursor-pointer group"
+                >
+                  <span>
+                    You: <strong className="text-white group-hover:text-purple-300 transition-colors">{currentName}</strong>
+                  </span>
+                  <span className="text-[10px] text-dark-purple group-hover:underline">edit</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5">
