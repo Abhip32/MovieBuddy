@@ -20,6 +20,7 @@ export const urlMap = {
   tv: "/tv-series",
   search: "/search",
   cinebot: "/cinebot",
+  watchParty: "/watch-party",
   favorites: "/favorites",
   profile: "/profile",
 };

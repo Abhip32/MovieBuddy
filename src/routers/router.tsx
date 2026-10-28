@@ -12,6 +12,7 @@ const Search = lazy(() => import("../pages/Search/Search"));
 const Error404Page = lazy(() => import("../pages/Error/Error404Page"));
 const Streaming = lazy(() => import("../pages/Streaming/Streaming"));
 const CineBot = lazy(() => import("../pages/CineBot/CineBot"));
+const WatchParty = lazy(() => import("../pages/WatchParty/WatchParty"));
 
 const routeObj: RouteObject[] = [
   {
@@ -31,6 +32,14 @@ const routeObj: RouteObject[] = [
         element: (
           <Suspense fallback={<Loader />}>
             <CineBot />
+          </Suspense>
+        )
+      },
+      {
+        path: "/watch-party",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <WatchParty />
           </Suspense>
         )
       },
