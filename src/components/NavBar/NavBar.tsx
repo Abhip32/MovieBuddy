@@ -46,15 +46,15 @@ const NavBar = () => {
                     </nav>
 
                     <div className="flex items-center gap-2.5 ml-auto">
-                        {/* Quick CineLens AI Trigger on Desktop */}
+                        {/* Quick CineBot AI Trigger */}
                         <button
                             type="button"
                             onClick={() => setShowAiModal(true)}
-                            title="Open CineLens AI Studio"
-                            className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black text-white bg-gradient-to-r from-[#451488] via-[#7e22ce] to-[#f59e0b] hover:brightness-110 shadow-[0_0_20px_rgba(245,158,11,0.35)] transition-all cursor-pointer border border-amber-400/30"
+                            title="Open CineBot AI"
+                            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium text-white bg-white/10 hover:bg-dark-purple transition-all duration-300 cursor-pointer border border-white/10 hover:border-dark-purple"
                         >
-                            <IoSparkles className="text-amber-300 animate-pulse text-xs" />
-                            <span>CineLens AI</span>
+                            <IoSparkles className="text-dark-purple text-xs" />
+                            <span>CineBot</span>
                         </button>
 
                         <Link to='/search' className="search-box group w-9 h-9 rounded-full flex justify-center items-center transition duration-300 ease-in-out hover:bg-white bg-white/10">

@@ -7,7 +7,6 @@ import Footer from './components/Footer/Footer'
 import ContextProvider from './context/ContextProvider';
 import Backdrop from './components/Backdrop/Backdrop';
 import VideoModal from './components/VideoModal/VideoModal';
-import AiMovieMascot from './components/AiCineBot/AiMovieMascot';
 
 function App() {
   return (
@@ -18,7 +17,6 @@ function App() {
         <Footer />
         <Backdrop />
         <VideoModal />
-        <AiMovieMascot />
       </ContextProvider>
     </div>
   )
