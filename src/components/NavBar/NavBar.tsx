@@ -40,26 +40,26 @@ const NavBar = () => {
                     <NavLink to={"/"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>Home</NavLink>
                     <NavLink to={"/movies"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>Movies</NavLink>
                     <NavLink to={"/tv-series"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>TV-Series</NavLink>
-                    <NavLink to={"/cinebot"} className={({ isActive }) => classnames("menu-items flex items-center gap-1.5", { active: isActive })} onClick={() => setShowNav(false)}>
-                        <IoSparkles className="text-dark-purple text-xs" />
-                        <span>CineBot AI</span>
-                    </NavLink>
                 </nav>
 
                 <div className="flex items-center gap-2 sm:gap-2.5 ml-auto">
-                    {/* Quick CineBot AI Page Link */}
+                    {/* Dedicated CineBot AI Pill */}
                     <NavLink
                         to="/cinebot"
                         title="Open CineBot AI Film Curator"
                         className={({ isActive }) => classnames(
-                            "group flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-300 cursor-pointer border flex-shrink-0",
+                            "group flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-300 cursor-pointer border flex-shrink-0",
                             isActive
-                                ? "bg-dark-purple text-white border-dark-purple shadow-[0_0_15px_rgba(179,0,255,0.4)]"
-                                : "text-white hover:text-dark-purple bg-white/10 hover:bg-white/20 border-white/10 hover:border-dark-purple"
+                                ? "bg-dark-purple text-white border-dark-purple shadow-[0_0_15px_rgba(179,0,255,0.4)] hover:bg-deep-purple"
+                                : "bg-white/10 hover:bg-dark-purple text-white border-white/10 hover:border-dark-purple hover:shadow-[0_0_15px_rgba(179,0,255,0.4)]"
                         )}
                     >
-                        <IoSparkles className="text-dark-purple group-hover:text-white transition-colors duration-300 text-xs" />
-                        <span className="transition-colors duration-300 group-hover:text-dark-purple">CineBot AI</span>
+                        {({ isActive }) => (
+                            <>
+                                <IoSparkles className={classnames("text-xs transition-colors duration-300", isActive ? "text-white" : "text-dark-purple group-hover:text-white")} />
+                                <span className="text-white font-medium">CineBot AI</span>
+                            </>
+                        )}
                     </NavLink>
 
                     <Link to='/search' className="search-box group w-9 h-9 rounded-full flex justify-center items-center transition duration-300 ease-in-out hover:bg-white bg-white/10 flex-shrink-0">
