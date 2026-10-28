@@ -118,6 +118,18 @@ const AiCineBotModal: React.FC<AiCineBotModalProps> = ({
     }
   }, [isOpen, initialPrompt, contextMovie]);
 
+  // Smooth scroll active trailer into view when expanded
+  useEffect(() => {
+    if (activeTrailer?.movieTitle) {
+      const cardEl = document.getElementById(
+        `cinebot-card-${encodeURIComponent(activeTrailer.movieTitle)}`
+      );
+      if (cardEl) {
+        cardEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [activeTrailer?.movieTitle]);
+
   // Play Trailer Handler
   const handlePlayTrailer = async (movie: AiMovieRecommendation) => {
     setActiveTrailer({
@@ -317,48 +329,6 @@ const AiCineBotModal: React.FC<AiCineBotModalProps> = ({
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
-          {/* Active Trailer Player */}
-          {activeTrailer && (
-            <div className="mb-6 p-4 rounded-xl bg-black-2 border border-dark-purple/40">
-              <div className="flex items-center justify-between pb-2 mb-3 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-dark-purple animate-ping" />
-                  <span className="text-xs font-semibold text-white">
-                    Trailer: {activeTrailer.movieTitle}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTrailer(null)}
-                  className="p-1 rounded-md bg-white/10 hover:bg-white/20 text-light-gray hover:text-white text-xs transition-colors cursor-pointer"
-                >
-                  <IoClose size={16} />
-                </button>
-              </div>
-
-              <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black border border-white/10">
-                {activeTrailer.loading ? (
-                  <div className="absolute inset-0 flex items-center justify-center text-xs text-light-gray">
-                    <span className="w-6 h-6 border-2 border-dark-purple border-t-transparent rounded-full animate-spin mr-2" />
-                    Loading trailer...
-                  </div>
-                ) : activeTrailer.videoUrl ? (
-                  <iframe
-                    src={activeTrailer.videoUrl}
-                    title={`${activeTrailer.movieTitle} Trailer`}
-                    allow="autoplay; encrypted-media; picture-in-picture"
-                    allowFullScreen
-                    className="w-full h-full border-0"
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-xs text-light-gray">
-                    No video trailer available.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Loading Animation */}
           {loading && (
             <div className="py-20 flex flex-col items-center justify-center text-center">
@@ -417,97 +387,238 @@ const AiCineBotModal: React.FC<AiCineBotModalProps> = ({
                 </div>
               )}
 
-              {/* Cards Grid Matching MovieBuddy's Platform Design */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {movies.map((movie, idx) => (
-                  <div
-                    key={movie.id || idx}
-                    className="card group flex flex-col justify-between rounded-xl bg-black-2 border border-white/10 hover:border-dark-purple/50 transition-all duration-300 overflow-hidden"
-                  >
-                    <div>
-                      {/* Movie Poster */}
+              {/* Cards Grid: 1 col on mobile, 2 on sm, 3 on md, 4 on lg */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {movies.map((movie, idx) => {
+                  const isTrailerActive = activeTrailer?.movieTitle === movie.title;
+
+                  // Netflix-style In-Place Trailer Preview: spans the row, trailer & details take both places, other cards go down
+                  if (isTrailerActive) {
+                    return (
                       <div
-                        onClick={() => handlePlayTrailer(movie)}
-                        className="relative aspect-2/3 w-full overflow-hidden bg-black cursor-pointer"
-                        title="Click to play trailer"
+                        id={`cinebot-card-${encodeURIComponent(movie.title)}`}
+                        key={movie.id || idx}
+                        className="col-span-full rounded-2xl bg-gradient-to-br from-black-2 via-[#141414] to-black border border-dark-purple/50 shadow-[0_8px_30px_rgba(179,0,255,0.2)] overflow-hidden transition-all duration-300 animate-fadeIn"
                       >
-                        <img
-                          src={
-                            movie.posterPath
-                              ? originalImage(movie.posterPath, 400)
-                              : "/images/no-image.jpg"
-                          }
-                          alt={movie.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "https://www.movienewz.com/img/films/poster-holder.jpg";
-                          }}
-                        />
+                        <div className="flex flex-col md:flex-row items-stretch">
+                          {/* Left: 16:9 Trailer Video Player */}
+                          <div className="relative w-full md:w-3/5 aspect-video bg-black flex-shrink-0 flex items-center justify-center border-b md:border-b-0 md:border-r border-white/10">
+                            {activeTrailer.loading ? (
+                              <div className="flex flex-col items-center justify-center gap-2 p-6 text-light-gray text-xs">
+                                <span className="w-8 h-8 border-2 border-dark-purple border-t-transparent rounded-full animate-spin" />
+                                <span className="text-white font-medium">Loading trailer...</span>
+                              </div>
+                            ) : activeTrailer.videoUrl ? (
+                              <iframe
+                                src={activeTrailer.videoUrl}
+                                title={`${activeTrailer.movieTitle} Trailer`}
+                                allow="autoplay; encrypted-media; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full border-0"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center p-6 text-xs text-light-gray">
+                                <span>No video trailer available.</span>
+                              </div>
+                            )}
+                          </div>
 
-                        {/* Star Rating Badge */}
-                        <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[10px] text-amber-400 flex items-center gap-1 border border-white/10">
-                          <AiTwotoneStar size={11} />
-                          <span>{movie.voteAverage ? movie.voteAverage.toFixed(1) : "N/A"}</span>
-                        </div>
+                          {/* Right: Movie Details & Actions (Takes the place alongside trailer) */}
+                          <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between">
+                            <div>
+                              {/* Top Badges & Close Button */}
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="px-2 py-0.5 rounded text-[10px] uppercase font-semibold bg-dark-purple/30 text-dark-purple border border-dark-purple/50">
+                                    {movie.mediaType === "tv" ? "TV Series" : "Movie"}
+                                  </span>
+                                  {movie.year && (
+                                    <span className="text-xs text-light-gray font-light">
+                                      {movie.year}
+                                    </span>
+                                  )}
+                                  {typeof movie.voteAverage === "number" && movie.voteAverage > 0 && (
+                                    <span className="flex items-center gap-1 text-xs text-amber-400 bg-black/60 px-2 py-0.5 rounded border border-white/10">
+                                      <AiTwotoneStar size={12} />
+                                      <span>{movie.voteAverage.toFixed(1)}</span>
+                                    </span>
+                                  )}
+                                </div>
 
-                        {/* Media Type Badge */}
-                        <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] uppercase text-white font-medium border border-white/10">
-                          {movie.mediaType === "tv" ? "TV" : "Movie"}
-                        </div>
+                                {/* Close Trailer Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveTrailer(null)}
+                                  title="Close trailer preview"
+                                  className="p-1.5 rounded-lg bg-white/10 hover:bg-dark-purple text-light-gray hover:text-white transition-colors cursor-pointer flex-shrink-0"
+                                >
+                                  <IoClose size={18} />
+                                </button>
+                              </div>
 
-                        {/* Center Hover Play Circle matching Card.tsx */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full text-dark-purple text-[36px] flex scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-xl">
-                          <BsFillPlayCircleFill />
+                              {/* Title */}
+                              <h3
+                                onClick={() => handleNavigateDetail(movie)}
+                                className="text-base sm:text-lg font-bold text-white hover:text-dark-purple transition-colors cursor-pointer"
+                                title={movie.title}
+                              >
+                                {movie.title}
+                              </h3>
+
+                              {/* AI Reason */}
+                              <div className="mt-2.5 p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-light-gray leading-relaxed">
+                                <span className="text-dark-purple font-semibold mr-1.5">Why CineBot picked this:</span>
+                                {movie.reason}
+                              </div>
+
+                              {/* Overview if present */}
+                              {movie.overview && (
+                                <p className="mt-2 text-xs text-light-gray/80 line-clamp-2 sm:line-clamp-3 leading-relaxed">
+                                  {movie.overview}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Actions Row */}
+                            <div className="flex items-center gap-2.5 mt-4 pt-3 border-t border-white/10">
+                              <button
+                                type="button"
+                                onClick={() => handleWatchStream(movie)}
+                                className="flex-1 py-2 sm:py-2.5 px-4 rounded-xl bg-dark-purple hover:bg-deep-purple font-medium text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-dark-purple/20"
+                              >
+                                <FaPlay size={11} />
+                                <span>Watch Stream</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleNavigateDetail(movie)}
+                                className="py-2 sm:py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 font-medium text-xs sm:text-sm text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <span>More Info</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveTrailer(null)}
+                                className="py-2 sm:py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-light-gray hover:text-white transition-colors cursor-pointer"
+                                title="Minimize trailer"
+                              >
+                                Close
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    );
+                  }
 
-                      {/* Card Info */}
-                      <div className="p-3">
-                        <h4
-                          onClick={() => handleNavigateDetail(movie)}
-                          className="text-xs sm:text-sm font-light text-white truncate hover:text-dark-purple transition-colors cursor-pointer"
-                          title={movie.title}
+                  // Inactive / Normal Card
+                  const posterImg = movie.posterPath
+                    ? originalImage(movie.posterPath, 400)
+                    : movie.backdropPath
+                    ? originalImage(movie.backdropPath, 500)
+                    : "/images/no-image.jpg";
+                  const backdropImg = movie.backdropPath
+                    ? originalImage(movie.backdropPath, 500)
+                    : posterImg;
+
+                  return (
+                    <div
+                      id={`cinebot-card-${encodeURIComponent(movie.title)}`}
+                      key={movie.id || idx}
+                      className="card group flex flex-col justify-between rounded-xl bg-black-2 border border-white/10 hover:border-dark-purple/50 transition-all duration-300 overflow-hidden"
+                    >
+                      <div>
+                        {/* Movie Visual: Wide 16:9 on mobile (1 card per row), 2:3 vertical poster on sm+ */}
+                        <div
+                          onClick={() => handlePlayTrailer(movie)}
+                          className="relative aspect-video sm:aspect-2/3 w-full overflow-hidden bg-black cursor-pointer"
+                          title="Click to play trailer"
                         >
-                          {movie.title}
-                        </h4>
+                          <img
+                            src={backdropImg}
+                            alt={movie.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 block sm:hidden"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src =
+                                "https://www.movienewz.com/img/films/poster-holder.jpg";
+                            }}
+                          />
+                          <img
+                            src={posterImg}
+                            alt={movie.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 hidden sm:block"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src =
+                                "https://www.movienewz.com/img/films/poster-holder.jpg";
+                            }}
+                          />
 
-                        <div className="flex items-center text-light-gray text-[11px] mt-0.5">
-                          <span>{movie.year || "N/A"}</span>
+                          {/* Star Rating Badge */}
+                          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[10px] text-amber-400 flex items-center gap-1 border border-white/10">
+                            <AiTwotoneStar size={11} />
+                            <span>{movie.voteAverage ? movie.voteAverage.toFixed(1) : "N/A"}</span>
+                          </div>
+
+                          {/* Media Type Badge */}
+                          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-[9px] uppercase text-white font-medium border border-white/10">
+                            {movie.mediaType === "tv" ? "TV" : "Movie"}
+                          </div>
+
+                          {/* Center Hover Play Circle matching Card.tsx */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-full text-dark-purple text-[36px] flex scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-xl">
+                            <BsFillPlayCircleFill />
+                          </div>
                         </div>
 
-                        {/* AI Reason */}
-                        <div className="mt-2 text-[10px] text-light-gray/90 bg-white/5 p-2 rounded-lg leading-relaxed line-clamp-2">
-                          <span className="text-dark-purple font-medium mr-1">Why:</span>
-                          {movie.reason}
+                        {/* Card Info */}
+                        <div className="p-3">
+                          <h4
+                            onClick={() => handleNavigateDetail(movie)}
+                            className="text-xs sm:text-sm font-light text-white truncate hover:text-dark-purple transition-colors cursor-pointer"
+                            title={movie.title}
+                          >
+                            {movie.title}
+                          </h4>
+
+                          <div className="flex items-center text-light-gray text-[11px] mt-0.5">
+                            <span>{movie.year || "N/A"}</span>
+                          </div>
+
+                          {/* AI Reason */}
+                          <div className="mt-2 text-[10px] text-light-gray/90 bg-white/5 p-2 rounded-lg leading-relaxed line-clamp-2">
+                            <span className="text-dark-purple font-medium mr-1">Why:</span>
+                            {movie.reason}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="p-3 pt-0 grid grid-cols-2 gap-2 mt-auto">
-                      <button
-                        type="button"
-                        onClick={() => handlePlayTrailer(movie)}
-                        className="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-dark-purple text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                        title="Watch Trailer"
-                      >
-                        <BsFillPlayFill size={13} />
-                        <span>Trailer</span>
-                      </button>
+                      {/* Action Buttons */}
+                      <div className="p-3 pt-0 grid grid-cols-2 gap-2 mt-auto">
+                        <button
+                          type="button"
+                          onClick={() => handlePlayTrailer(movie)}
+                          className="py-1.5 px-2 rounded-lg bg-white/5 hover:bg-dark-purple text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          title="Watch Trailer"
+                        >
+                          <BsFillPlayFill size={13} />
+                          <span>Trailer</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleWatchStream(movie)}
-                        className="py-1.5 px-2 rounded-lg bg-dark-purple hover:bg-deep-purple text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                        title="Stream on MovieBuddy"
-                      >
-                        <FaPlay size={9} />
-                        <span>Watch</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => handleWatchStream(movie)}
+                          className="py-1.5 px-2 rounded-lg bg-dark-purple hover:bg-deep-purple text-xs text-white flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          title="Stream on MovieBuddy"
+                        >
+                          <FaPlay size={9} />
+                          <span>Watch</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

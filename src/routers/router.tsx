@@ -11,6 +11,7 @@ const Detail = lazy(() => import("../pages/Detail/Detail"));
 const Search = lazy(() => import("../pages/Search/Search"));
 const Error404Page = lazy(() => import("../pages/Error/Error404Page"));
 const Streaming = lazy(() => import("../pages/Streaming/Streaming"));
+const CineBot = lazy(() => import("../pages/CineBot/CineBot"));
 
 const routeObj: RouteObject[] = [
   {
@@ -22,6 +23,14 @@ const routeObj: RouteObject[] = [
         element: (
           <Suspense fallback={<Loader />}>
             <Home />
+          </Suspense>
+        )
+      },
+      {
+        path: "/cinebot",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <CineBot />
           </Suspense>
         )
       },
