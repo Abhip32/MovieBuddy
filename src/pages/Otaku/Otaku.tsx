@@ -13,8 +13,10 @@ import {
 } from "react-icons/io5";
 import { FaFire, FaDragon } from "react-icons/fa";
 import { BiMoviePlay } from "react-icons/bi";
+import { BsFillPlayCircleFill } from "react-icons/bs";
+import { MdKeyboardArrowRight } from "react-icons/md";
 import Wrapper from "../../components/Wrapper/Wrapper";
-import otakuService, { AniListMedia } from "../../services/otakuService";
+import otakuService, { AniListMedia, cleanAnimeDescription } from "../../services/otakuService";
 import { useVideoModal } from "../../context/VideoModal/VideoModal.context";
 
 type AnimeCategory = "trending" | "top_rated" | "movies" | "action" | "fantasy" | "scifi" | "romance";
@@ -182,17 +184,25 @@ const Otaku: React.FC = () => {
                 )}
               </div>
 
-              <p className="text-xs sm:text-sm text-light-gray/90 line-clamp-3 leading-relaxed max-w-xl">
-                {currentHero.description || "Stream this top-rated anime series directly on MovieBuddy."}
+              <p className="text-xs sm:text-sm text-light-gray/90 leading-relaxed max-w-lg line-clamp-2 sm:line-clamp-3">
+                {cleanAnimeDescription(currentHero.description, 150) || "Stream this top-rated anime series directly on MovieBuddy."}
               </p>
 
-              {/* Action Buttons: View Details, Trailer, and Stream */}
+              {/* Action Buttons: Stream, View Details, Trailer */}
               <div className="flex items-center gap-3 sm:gap-4 pt-2 flex-wrap">
                 <Link
-                  to={`/otaku/detail/${currentHero.id}`}
+                  to={`/otaku/stream/${currentHero.id}`}
                   className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-dark-purple hover:bg-deep-purple font-bold text-xs sm:text-sm text-white shadow-lg shadow-dark-purple/40 transition-all transform hover:scale-105 cursor-pointer"
                 >
-                  <IoInformationCircleOutline size={18} />
+                  <IoPlay size={16} />
+                  <span>Stream Anime</span>
+                </Link>
+
+                <Link
+                  to={`/otaku/detail/${currentHero.id}`}
+                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 font-semibold text-xs sm:text-sm text-white transition-all cursor-pointer"
+                >
+                  <IoInformationCircleOutline size={17} />
                   <span>View Details</span>
                 </Link>
 
@@ -204,14 +214,6 @@ const Otaku: React.FC = () => {
                   <BiMoviePlay size={17} />
                   <span>Trailer</span>
                 </button>
-
-                <Link
-                  to={`/otaku/stream/${currentHero.id}`}
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-medium text-purple-300 hover:text-white transition-colors"
-                >
-                  <IoPlay size={14} />
-                  <span>Watch Stream &rarr;</span>
-                </Link>
               </div>
             </div>
           )}
@@ -321,8 +323,14 @@ const Otaku: React.FC = () => {
             {[...Array(18).keys()].map((n) => (
               <div
                 key={n}
-                className="aspect-[2/3] rounded-xl bg-white/5 animate-pulse border border-white/5"
-              />
+                className="rounded-xl overflow-hidden bg-black-2 border border-white/5 flex flex-col"
+              >
+                <div className="aspect-[2/3] w-full bg-white/5 animate-pulse" />
+                <div className="p-2.5 space-y-2">
+                  <div className="h-3.5 w-3/4 bg-white/10 rounded animate-pulse" />
+                  <div className="h-2.5 w-1/2 bg-white/5 rounded animate-pulse" />
+                </div>
+              </div>
             ))}
           </div>
         ) : animeList.length === 0 ? (
@@ -354,14 +362,10 @@ const Otaku: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
-                    {/* Gradient Overlay with Detail / Stream actions on Hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2 p-3">
-                      <span className="w-10 h-10 rounded-full bg-dark-purple text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                        <IoInformationCircleOutline size={22} />
-                      </span>
-                      <span className="text-xs font-bold text-white bg-black/60 px-2.5 py-1 rounded-full border border-white/20">
-                        View Details
-                      </span>
+                    {/* Hover Play Button (identical to MovieBuddy's movie card) */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute top-2/4 left-2/4 -translate-x-2/4 -translate-y-2/4 bg-white rounded-full text-dark-purple text-[36px] flex z-[6] scale-50 opacity-0 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 shadow-xl pointer-events-none">
+                      <BsFillPlayCircleFill />
                     </div>
 
                     {/* Top Badges */}
@@ -399,9 +403,10 @@ const Otaku: React.FC = () => {
                       <span className="text-light-gray text-[10px]">{anime.seasonYear || "Anime"}</span>
                       <Link
                         to={detailUrl}
-                        className="text-purple-300 hover:text-white font-medium text-[10px] transition-colors"
+                        className="text-purple-300 hover:text-white font-medium text-[10px] transition-colors inline-flex items-center gap-0.5"
                       >
-                        Details &rarr;
+                        <span>Details</span>
+                        <MdKeyboardArrowRight size={13} />
                       </Link>
                     </div>
                   </div>

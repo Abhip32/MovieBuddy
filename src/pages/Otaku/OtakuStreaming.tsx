@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import otakuService, { AniListMedia } from "../../services/otakuService";
+import otakuService, { AniListMedia, cleanAnimeDescription } from "../../services/otakuService";
 import { FaUsers, FaServer } from "react-icons/fa";
-import { IoStar, IoVolumeHigh, IoLanguage, IoArrowBack, IoInformationCircleOutline } from "react-icons/io5";
+import { IoStar, IoVolumeHigh, IoLanguage, IoInformationCircleOutline } from "react-icons/io5";
 import {
   WatchPartySession,
   generateRoomCode,
@@ -383,7 +383,7 @@ const OtakuStreaming: React.FC = () => {
                 Synopsis
               </h3>
               <p className="text-xs sm:text-sm text-light-gray leading-relaxed">
-                {anime.description || "No synopsis available for this anime."}
+                {cleanAnimeDescription(anime.description, 280) || "No synopsis available for this anime."}
               </p>
 
               {anime.genres && anime.genres.length > 0 && (

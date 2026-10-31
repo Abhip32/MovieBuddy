@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   IoPlay,
   IoStar,
   IoCalendar,
   IoTv,
   IoFilm,
-  IoArrowBack,
-  IoSparkles,
 } from "react-icons/io5";
 import { BiMoviePlay } from "react-icons/bi";
+import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import Wrapper from "../../components/Wrapper/Wrapper";
-import otakuService, { AniListMedia } from "../../services/otakuService";
+import otakuService, { AniListMedia, cleanAnimeDescription } from "../../services/otakuService";
 import { useVideoModal } from "../../context/VideoModal/VideoModal.context";
 
 const OtakuDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const videoModal = useVideoModal();
 
   const [anime, setAnime] = useState<AniListMedia | null>(null);
@@ -84,68 +82,64 @@ const OtakuDetail: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white font-poppins pb-20">
-      {/* Huge Backdrop Banner */}
-      <div className="relative w-full h-[380px] sm:h-[460px] md:h-[540px] bg-black-2 overflow-hidden">
-        {bannerBg && (
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${bannerBg})`,
-              filter: "brightness(0.65)",
-            }}
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/60 to-transparent" />
+      {/* Hero Backdrop & Details Section */}
+      <div
+        className="relative pt-20 sm:pt-24 pb-12 bg-cover bg-center overflow-hidden"
+        style={{
+          backgroundImage: bannerBg ? `url(${bannerBg})` : undefined,
+        }}
+      >
+        {/* Layered Cinematic Overlays for contrast and legibility */}
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/50 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent pointer-events-none" />
 
-        {/* Top Back Button */}
-        <div className="absolute top-24 left-4 sm:left-8 z-20">
-          <button
-            onClick={() => navigate("/otaku")}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-xs font-semibold text-white hover:bg-dark-purple transition-colors cursor-pointer"
-          >
-            <IoArrowBack size={15} />
-            <span>Otaku Hub</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content Info */}
-      <Wrapper className="relative z-20 -mt-36 sm:-mt-44 md:-mt-52">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-          {/* Left Column: Poster & Quick Action */}
-          <div className="flex-shrink-0 self-center md:self-start w-52 sm:w-60 md:w-68">
-            <div className="rounded-2xl overflow-hidden border-2 border-white/15 shadow-2xl bg-black-2 aspect-[2/3]">
-              <img
-                src={anime.coverImage.extraLarge || anime.coverImage.large}
-                alt={englishTitle}
-                className="w-full h-full object-cover"
-              />
-            </div>
-
-            {/* Direct Play & Trailer Buttons */}
-            <div className="mt-4 space-y-2.5">
-              <Link
-                to={`/otaku/stream/${anime.id}`}
-                className="w-full py-3 px-4 rounded-xl bg-dark-purple hover:bg-deep-purple font-bold text-sm text-white flex items-center justify-center gap-2 transition-all shadow-lg shadow-dark-purple/30 cursor-pointer transform active:scale-95"
-              >
-                <IoPlay size={18} />
-                <span>Stream Anime Now</span>
-              </Link>
-
-              <button
-                type="button"
-                onClick={handleOpenTrailer}
-                className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white hover:text-black border border-white/15 font-semibold text-xs sm:text-sm text-white flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <BiMoviePlay size={17} />
-                <span>Watch Trailer</span>
-              </button>
-            </div>
+        <Wrapper className="relative z-10">
+          {/* Back to Otaku Hub Button */}
+          <div className="mb-4">
+            <Link
+              to="/otaku"
+              aria-label="Back to Otaku Hub"
+              className="inline-flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-dark-purple border border-white/15 text-white transition-all backdrop-blur-md cursor-pointer hover:scale-105 shadow-md group"
+            >
+              <MdKeyboardArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform" />
+            </Link>
           </div>
 
-          {/* Right Column: Titles, Meta, Genres, Description */}
-          <div className="flex-1 space-y-4">
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start">
+            {/* Left Column: Poster & Quick Action */}
+            <div className="flex-shrink-0 self-center md:self-start w-52 sm:w-60 md:w-64">
+              <div className="rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-black-2 aspect-[2/3]">
+                <img
+                  src={anime.coverImage.extraLarge || anime.coverImage.large}
+                  alt={englishTitle}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Direct Play & Trailer Buttons */}
+              <div className="mt-4 space-y-2.5">
+                <Link
+                  to={`/otaku/stream/${anime.id}`}
+                  className="w-full py-3 px-4 rounded-xl bg-dark-purple hover:bg-deep-purple font-bold text-sm text-white flex items-center justify-center gap-2 transition-all shadow-lg shadow-dark-purple/30 cursor-pointer transform active:scale-95"
+                >
+                  <IoPlay size={18} />
+                  <span>Stream Anime Now</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleOpenTrailer}
+                  className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white hover:text-black border border-white/15 font-semibold text-xs sm:text-sm text-white flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <BiMoviePlay size={17} />
+                  <span>Watch Trailer</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column: Titles, Meta, Genres, Description */}
+            <div className="flex-1 space-y-4">
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dark-purple/30 text-purple-300 border border-dark-purple/50 uppercase tracking-wider">
@@ -223,7 +217,7 @@ const OtakuDetail: React.FC = () => {
                 Synopsis
               </h3>
               <p className="text-xs sm:text-sm text-light-gray leading-relaxed whitespace-pre-line max-w-3xl">
-                {anime.description || "No description provided for this anime."}
+                {cleanAnimeDescription(anime.description, 0) || "No description provided for this anime."}
               </p>
             </div>
 
@@ -236,9 +230,10 @@ const OtakuDetail: React.FC = () => {
                   </h3>
                   <Link
                     to={`/otaku/stream/${anime.id}?ep=1`}
-                    className="text-xs text-dark-purple hover:underline font-semibold"
+                    className="text-xs text-purple-300 hover:text-white hover:underline font-semibold inline-flex items-center gap-1"
                   >
-                    Play Episode 1 &rarr;
+                    <span>Play Episode 1</span>
+                    <MdKeyboardArrowRight size={14} />
                   </Link>
                 </div>
 
@@ -331,7 +326,8 @@ const OtakuDetail: React.FC = () => {
         </div>
       </Wrapper>
     </div>
-  );
+  </div>
+);
 };
 
 export default OtakuDetail;

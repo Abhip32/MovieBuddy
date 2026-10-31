@@ -53,12 +53,13 @@ const Card = ({ data, mediaType, size = 'large' }: Props) => {
     return (
         <div className="card hover:scale-105 transition-transform duration-300 overflow-hidden rounded-xl" >
             <Link to={`${urlMap[parserData.media_type]}/${encodeURIComponent(parserData.name?.toLowerCase()).replace(/%20/g, '-') || ""}/${data.id}`} className='w-full block h-full'>
-                <div className={classNames(`list__card-content group`)}>
+                <div className={classNames(`list__card-content group aspect-[2/3] bg-black-2`, { 'h-60': size === 'normal', 'h-[280px]': size === 'large' })}>
                     <LazyLoadImage
-                        wrapperClassName='w-full h-full block'
+                        wrapperClassName='w-full h-full block bg-black-2'
                         effect='blur' loading='lazy'
                         className='w-full h-full block object-cover'
                         alt={data.poster_path}
+                        src={originalImage(data.poster_path, 300)}
                         srcSet={`${originalImage(data.poster_path, 300)} 300w`}
                     />
 

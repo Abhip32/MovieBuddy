@@ -57,6 +57,25 @@ export interface AniListMedia {
   };
 }
 
+export const cleanAnimeDescription = (text?: string, maxLength = 160): string => {
+  if (!text) return "";
+  let clean = text
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\(Source:.*?\)/gi, "")
+    .replace(/\[Written by.*?\]/gi, "")
+    .replace(/Note:.*?$/gi, "")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (maxLength > 0 && clean.length > maxLength) {
+    clean = clean.slice(0, maxLength).trim() + "...";
+  }
+  return clean;
+};
+
 const ANILIST_API_URL = "https://graphql.anilist.co";
 
 const LIST_QUERY = `
