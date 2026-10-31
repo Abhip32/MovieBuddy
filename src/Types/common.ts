@@ -13,6 +13,7 @@ export interface Country {
 export const mediaDisplayName = {
   movie: "Movies",
   tv: "TV-Series",
+  otaku: "Otaku",
 };
 
 export const urlMap = {
@@ -21,6 +22,7 @@ export const urlMap = {
   search: "/search",
   cinebot: "/cinebot",
   watchParty: "/watch-party",
+  otaku: "/otaku",
   favorites: "/favorites",
   profile: "/profile",
 };
@@ -29,7 +31,6 @@ export const siteMap = {
   YouTube: "https://www.youtube.com/embed/",
   Vimeo: "https://vimeo.com/",
 };
-
 
 export interface ExternalIds {
   imdb_id?: string;

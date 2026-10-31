@@ -40,6 +40,10 @@ const NavBar = () => {
                     <NavLink to={"/"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>Home</NavLink>
                     <NavLink to={"/movies"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>Movies</NavLink>
                     <NavLink to={"/tv-series"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>TV-Series</NavLink>
+                    <NavLink to={"/otaku"} className={({ isActive }) => classnames("menu-items flex items-center gap-1.5", { active: isActive })} onClick={() => setShowNav(false)}>
+                        <span>Otaku</span>
+                        <span className="text-[9px] uppercase px-1.5 py-0.5 rounded-full bg-dark-purple/30 text-purple-300 font-semibold border border-dark-purple/40">Anime</span>
+                    </NavLink>
                     <NavLink to={"/watch-party"} className={({ isActive }) => classnames("menu-items", { active: isActive })} onClick={() => setShowNav(false)}>Watch Party</NavLink>
                 </nav>
 
