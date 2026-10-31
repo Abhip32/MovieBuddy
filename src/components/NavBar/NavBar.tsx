@@ -15,7 +15,10 @@ const NavBar = () => {
     const matches = useMatches()
 
     const darkNav: boolean = useMemo(() => {
-        return matches.some(route => (Object.keys(urlMap) as Array<keyof typeof urlMap>).some(key => route.pathname === urlMap[key]))
+        return matches.some(route => 
+            (Object.keys(urlMap) as Array<keyof typeof urlMap>).some(key => route.pathname === urlMap[key]) &&
+            route.pathname !== '/otaku'
+        )
     }, [matches])
 
     useEffect(() => {
@@ -31,7 +34,7 @@ const NavBar = () => {
     }, [])
 
     return (
-        <header className={classnames('header py-3 absolute top-0 left-0 w-full z-10 md:z-[6]', { 'bg-black': darkNav })}>
+        <header className={classnames('header py-3 absolute top-0 left-0 w-full z-50', { 'bg-black': darkNav })}>
             <Wrapper className='flex flex-row items-center'>
                 <button className='btn-bars text-4xl text-white mr-4 inline-block md:hidden duration-300 transition-colors hover:text-dark-purple' onClick={(event: MouseEvent) => { event.stopPropagation(); setShowNav(true) }}><HiBars3BottomLeft /></button>
                 <Logo />

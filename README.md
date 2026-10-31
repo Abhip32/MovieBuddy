@@ -51,6 +51,24 @@
 
 ---
 
+### Otaku Anime Hub (AniList GraphQL Powered)
+Dedicated anime streaming portal powered 100% by the AniList GraphQL API. Features dynamic hero spotlight carousel, genre tabs (Trending, Top-Rated, Movies, Shonen & Action, Fantasy & Isekai, Sci-Fi & Mecha, Romance), and responsive poster grid with centered hover play animations.
+![Otaku Anime Hub](./screenshots/b-otaku.png)
+
+---
+
+### Otaku Anime Details & Japanese Voice Cast
+Immersive anime detail page featuring high-definition backdrops, clean spoiler-free synopsis, episode quick-picker (1 to 100+ episodes), key character dossiers with authentic Japanese voice actor credits, and recommended similar anime.
+![Otaku Anime Details](./screenshots/d-otaku-detail.png)
+
+---
+
+### Watch Party — Real-Time Synchronized Cinema Rooms
+Host and join virtual movie watch parties. Features live search across all 100k+ TMDB movies and TV series, custom shareable room codes, host-synchronized stream playback, floating reaction emoji animations, and live peer chat dock.
+![Watch Party](./screenshots/c-watch-party.png)
+
+---
+
 ### CineBot AI — Personalized Cinema Curator & Mood Watchlists
 Intelligent movie recommendation engine powered by Google Gemini 2.5 Flash with structured JSON output, real-time TMDB poster hydration, critic commentary, and high-definition card presentation.
 ![CineBot AI Assistant](./screenshots/z-cinebot-ai.png)
@@ -84,12 +102,14 @@ flowchart TD
 
 ## ✨ Features
 
+- 🌸 **Otaku Anime Hub**: Dedicated anime portal powered 100% by AniList GraphQL with curated genre tabs, Japanese voice cast dossiers, and responsive card play hover.
+- 👥 **Watch Party with Universal Search**: Real-time room creation with live search for any Movie or TV series across TMDB's entire 100K+ catalog, synchronized host playback, chat dock, and floating emoji reactions.
 - 🤖 **CineBot AI Assistant**: Natural language mood-to-movie curation powered by Google Gemini 2.5 Flash.
 - 🍿 **Interactive Cinema Mascot**: Floating companion with quick vibe triggers and cinema glasses.
 - 🌟 **Trending & Popular**: Real-time trending movies, top-rated TV series, and seasonal releases.
 - 🔍 **Instant Search & Genre Filtering**: Search for any film or franchise with instant debounced queries.
 - 🎭 **Cast & Crew Filmographies**: Detailed actor filmography pages, character bios, and credited roles.
-- 🎬 **Trailers & Video Players**: High-definition YouTube trailer modal overlays right within the interface.
+- 🎬 **Trailers & Video Players**: High-definition trailer modal overlays right within the interface.
 - 📱 **Mobile & Desktop Responsive**: Fully adaptive UI crafted with Tailwind CSS and modern glassmorphism accents.
 
 ---
@@ -99,7 +119,9 @@ flowchart TD
 - **Frontend**: React 18, TypeScript, Vite
 - **Styling**: Tailwind CSS, PostCSS
 - **AI Engine**: Google Gemini 2.5 Flash API (`@google/generative-ai` REST endpoint)
-- **Cinema Data**: The Movie Database (TMDB) REST API
+- **Cinema & Anime Data**: The Movie Database (TMDB) REST API & AniList GraphQL API
+- **Streaming Players**: Dual-server anime streaming (AnimeEmbed & FilmU) with SUB/DUB toggle
+- **Watch Party Sync**: Real-time peer-to-peer BroadcastChannel & synchronized room engine
 - **Deployment**: Vercel (Node.js 24.x runtime)
 
 ---

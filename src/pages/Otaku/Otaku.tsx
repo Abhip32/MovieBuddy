@@ -148,9 +148,9 @@ const Otaku: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
 
-        <Wrapper className="relative z-10 h-full flex flex-col justify-end pb-16 sm:pb-20">
+        <Wrapper className="relative z-[2] h-full flex flex-col justify-end pb-16 sm:pb-20 pointer-events-none">
           {currentHero && (
-            <div className="max-w-2xl space-y-3.5 animate-fadeIn">
+            <div className="max-w-2xl space-y-3.5 animate-fadeIn pointer-events-auto">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-purple/30 border border-dark-purple/50 text-xs text-purple-300 font-semibold tracking-wide backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-dark-purple animate-pulse" />
                 <span>OTAKU SPOTLIGHT</span>
@@ -219,7 +219,7 @@ const Otaku: React.FC = () => {
           )}
 
           {/* Hero Indicator Dots */}
-          <div className="absolute bottom-6 right-6 flex items-center gap-2">
+          <div className="absolute bottom-6 right-6 flex items-center gap-2 pointer-events-auto">
             {heroList.map((h, i) => (
               <button
                 key={h.id}

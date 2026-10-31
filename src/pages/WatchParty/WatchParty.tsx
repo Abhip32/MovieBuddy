@@ -1,25 +1,96 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { IoPeople, IoArrowForward, IoCheckmarkCircleOutline } from "react-icons/io5";
+import {
+  IoPeople,
+  IoArrowForward,
+  IoCheckmarkCircleOutline,
+  IoSearch,
+  IoClose,
+  IoStar,
+  IoFilm,
+  IoTv,
+} from "react-icons/io5";
 import { FaCrown, FaUsers, FaPlay, FaRegComments, FaSmile } from "react-icons/fa";
 import Wrapper from "../../components/Wrapper/Wrapper";
 import { generateRoomCode } from "../../services/watchPartyService";
+import tmdbApi from "../../services/tmdbApi";
+import { originalImage } from "../../services/apiConfigs";
+import { Movie, TV } from "../../Types/Movie";
 
-interface StarterOption {
+export interface SelectedPartyMedia {
   id: string;
   mediaType: "movie" | "tv";
   title: string;
   category: string;
+  poster_path?: string;
+  year?: string;
+  rating?: number;
 }
 
-const STARTER_OPTIONS: StarterOption[] = [
-  { id: "157336", mediaType: "movie", title: "Interstellar", category: "Sci-Fi Film" },
-  { id: "27205", mediaType: "movie", title: "Inception", category: "Sci-Fi Film" },
-  { id: "155", mediaType: "movie", title: "The Dark Knight", category: "Action Film" },
-  { id: "872585", mediaType: "movie", title: "Oppenheimer", category: "Drama Film" },
-  { id: "1396", mediaType: "tv", title: "Breaking Bad", category: "TV Series" },
-  { id: "100088", mediaType: "tv", title: "The Last of Us", category: "TV Series" },
-  { id: "66732", mediaType: "tv", title: "Stranger Things", category: "TV Series" },
+const STARTER_OPTIONS: SelectedPartyMedia[] = [
+  {
+    id: "157336",
+    mediaType: "movie",
+    title: "Interstellar",
+    category: "Sci-Fi Film",
+    poster_path: "/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg",
+    year: "2014",
+    rating: 8.4,
+  },
+  {
+    id: "27205",
+    mediaType: "movie",
+    title: "Inception",
+    category: "Sci-Fi Film",
+    poster_path: "/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
+    year: "2010",
+    rating: 8.4,
+  },
+  {
+    id: "155",
+    mediaType: "movie",
+    title: "The Dark Knight",
+    category: "Action Film",
+    poster_path: "/qJ2tW6WMUDux911r6m7haRef0WH.jpg",
+    year: "2008",
+    rating: 8.5,
+  },
+  {
+    id: "872585",
+    mediaType: "movie",
+    title: "Oppenheimer",
+    category: "Drama Film",
+    poster_path: "/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+    year: "2023",
+    rating: 8.1,
+  },
+  {
+    id: "1396",
+    mediaType: "tv",
+    title: "Breaking Bad",
+    category: "TV Series",
+    poster_path: "/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg",
+    year: "2008",
+    rating: 8.9,
+  },
+  {
+    id: "100088",
+    mediaType: "tv",
+    title: "The Last of Us",
+    category: "TV Series",
+    poster_path: "/uKvVjHNqB5VmOrdxqAt2V7JMrHG.jpg",
+    year: "2023",
+    rating: 8.6,
+  },
+  {
+    id: "66732",
+    mediaType: "tv",
+    title: "Stranger Things",
+    category: "TV Series",
+    poster_path: "/49WJfeN0moxb9IPfGn8AIqMGskD.jpg",
+    year: "2016",
+    rating: 8.6,
+  },
 ];
 
 const WatchParty: React.FC = () => {
@@ -29,8 +100,86 @@ const WatchParty: React.FC = () => {
   const [hostName, setHostName] = useState(
     localStorage.getItem("moviebuddy_party_username") || ""
   );
-  const [selectedStarter, setSelectedStarter] = useState<string>("157336");
+  const [selectedMedia, setSelectedMedia] = useState<SelectedPartyMedia>(STARTER_OPTIONS[0]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SelectedPartyMedia[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [hostCustomCode, setHostCustomCode] = useState("");
+
+  // Search TMDB live for movies & TV series
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    const handler = setTimeout(async () => {
+      try {
+        const [moviesRes, tvRes] = await Promise.all([
+          tmdbApi.search<Movie>("movie", query),
+          tmdbApi.search<TV>("tv", query),
+        ]);
+
+        const movieItems: SelectedPartyMedia[] = (moviesRes.data.results || [])
+          .slice(0, 5)
+          .map((m) => ({
+            id: String(m.id),
+            mediaType: "movie",
+            title: m.title || "Untitled Movie",
+            category: "Movie",
+            poster_path: m.poster_path,
+            year: m.release_date ? new Date(m.release_date).getFullYear().toString() : undefined,
+            rating: typeof m.vote_average === "number" ? m.vote_average : undefined,
+          }));
+
+        const tvItems: SelectedPartyMedia[] = (tvRes.data.results || [])
+          .slice(0, 5)
+          .map((t) => ({
+            id: String(t.id),
+            mediaType: "tv",
+            title: t.name || "Untitled Series",
+            category: "TV Series",
+            poster_path: t.poster_path,
+            year: t.first_air_date ? new Date(t.first_air_date).getFullYear().toString() : undefined,
+            rating: typeof t.vote_average === "number" ? t.vote_average : undefined,
+          }));
+
+        const combined = [...movieItems, ...tvItems].sort(
+          (a, b) => (b.rating || 0) - (a.rating || 0)
+        );
+        setSearchResults(combined);
+        setShowDropdown(true);
+      } catch (err) {
+        console.error("Watch Party search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Click outside to close search dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectMedia = (item: SelectedPartyMedia) => {
+    setSelectedMedia(item);
+    setSearchQuery("");
+    setShowDropdown(false);
+  };
 
   // Join form states
   const [joinName, setJoinName] = useState(
@@ -53,14 +202,11 @@ const WatchParty: React.FC = () => {
       localStorage.setItem("moviebuddy_party_username", finalHost);
     } catch {}
 
-    const option =
-      STARTER_OPTIONS.find((s) => s.id === selectedStarter) || STARTER_OPTIONS[0];
-
     const roomCode = hostCustomCode.trim()
       ? hostCustomCode.trim().toUpperCase()
       : generateRoomCode();
 
-    navigate(`/stream/${option.mediaType}/${option.id}?party=${roomCode}&host=true`);
+    navigate(`/stream/${selectedMedia.mediaType}/${selectedMedia.id}?party=${roomCode}&host=true`);
   };
 
   const handleJoinParty = (e: React.FormEvent) => {
@@ -178,22 +324,142 @@ const WatchParty: React.FC = () => {
                   )}
                 </div>
 
-                {/* Choose Starter Title */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-light-gray uppercase tracking-wider mb-1.5">
-                    Choose Starter Movie or Show:
-                  </label>
-                  <select
-                    value={selectedStarter}
-                    onChange={(e) => setSelectedStarter(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-black border border-white/15 text-xs sm:text-sm text-white focus:outline-none focus:border-dark-purple transition-colors"
-                  >
-                    {STARTER_OPTIONS.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.title} ({item.category})
-                      </option>
+                {/* Search & Choose Any Movie or TV Series */}
+                <div ref={dropdownRef} className="relative">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] font-semibold text-light-gray uppercase tracking-wider">
+                      Choose Any Movie or TV Series:
+                    </label>
+                    <span className="text-[10px] text-purple-300 font-medium">
+                      Search TMDB catalog
+                    </span>
+                  </div>
+
+                  {/* Search Input Bar */}
+                  <div className="relative flex items-center">
+                    <IoSearch className="absolute left-3.5 text-light-gray pointer-events-none" size={15} />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowDropdown(true);
+                      }}
+                      onFocus={() => {
+                        if (searchResults.length > 0) setShowDropdown(true);
+                      }}
+                      placeholder="Search any title (e.g. Inception, Stranger Things, Gladiator)..."
+                      className="w-full pl-9 pr-9 py-2.5 rounded-xl bg-black border border-white/15 text-xs sm:text-sm text-white placeholder-light-gray/50 focus:outline-none focus:border-dark-purple transition-colors"
+                    />
+                    {isSearching ? (
+                      <div className="absolute right-3 w-3.5 h-3.5 border-2 border-t-transparent border-purple-400 rounded-full animate-spin" />
+                    ) : searchQuery ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setSearchResults([]);
+                          setShowDropdown(false);
+                        }}
+                        className="absolute right-3 text-light-gray hover:text-white"
+                      >
+                        <IoClose size={16} />
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {/* Live Search Results Dropdown */}
+                  {showDropdown && searchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 z-50 max-h-60 overflow-y-auto rounded-xl bg-black-2 border border-white/15 shadow-2xl divide-y divide-white/5 scrollbar-thin">
+                      {searchResults.map((item) => (
+                        <div
+                          key={`${item.mediaType}-${item.id}`}
+                          onClick={() => handleSelectMedia(item)}
+                          className="p-2.5 hover:bg-white/10 cursor-pointer flex items-center gap-3 transition-colors"
+                        >
+                          <div className="w-9 h-12 rounded bg-black flex-shrink-0 overflow-hidden border border-white/10">
+                            {item.poster_path ? (
+                              <img
+                                src={originalImage(item.poster_path, 200)}
+                                alt={item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-[9px] text-light-gray">
+                                {item.mediaType === "movie" ? "FILM" : "TV"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 overflow-hidden">
+                            <p className="text-xs font-semibold text-white truncate">{item.title}</p>
+                            <div className="flex items-center gap-2 text-[10px] text-light-gray mt-0.5">
+                              <span className="uppercase px-1.5 py-0.2 rounded bg-white/10 text-white font-bold text-[9px]">
+                                {item.mediaType === "movie" ? "Movie" : "TV Series"}
+                              </span>
+                              {item.year && <span>{item.year}</span>}
+                              {item.rating && (
+                                <span className="flex items-center gap-0.5 text-amber-400 font-bold">
+                                  <IoStar size={10} /> {item.rating.toFixed(1)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Selected Item Confirmation Card */}
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-9 h-12 rounded bg-black flex-shrink-0 overflow-hidden border border-white/10">
+                        {selectedMedia.poster_path ? (
+                          <img
+                            src={originalImage(selectedMedia.poster_path, 200)}
+                            alt={selectedMedia.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[8px] text-purple-300">
+                            {selectedMedia.mediaType.toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="overflow-hidden">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-dark-purple/80 text-white font-bold">
+                            {selectedMedia.mediaType.toUpperCase()}
+                          </span>
+                          <span className="text-xs font-bold text-white truncate">{selectedMedia.title}</span>
+                        </div>
+                        <p className="text-[10px] text-light-gray mt-0.5">
+                          Ready to sync • ID #{selectedMedia.id} {selectedMedia.year ? `(${selectedMedia.year})` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-purple-300 font-semibold px-2 py-1 rounded-lg bg-dark-purple/20 border border-dark-purple/40 flex-shrink-0">
+                      Selected
+                    </span>
+                  </div>
+
+                  {/* Popular Quick Picks */}
+                  <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-light-gray">Quick Picks:</span>
+                    {STARTER_OPTIONS.slice(0, 4).map((pop) => (
+                      <button
+                        key={pop.id}
+                        type="button"
+                        onClick={() => setSelectedMedia(pop)}
+                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                          selectedMedia.id === pop.id
+                            ? "bg-dark-purple text-white border-dark-purple font-semibold shadow-sm shadow-dark-purple/50"
+                            : "bg-white/5 text-light-gray border-white/10 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        {pop.title}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
 
                 {/* Custom Room Code (Optional) */}
