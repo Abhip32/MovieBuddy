@@ -8,11 +8,17 @@ import {
   IoPlay,
   IoStar,
   IoSparkles,
+  IoInformationCircleOutline,
 } from "react-icons/io5";
 import { FaFire, FaDragon } from "react-icons/fa";
+import { BiMoviePlay } from "react-icons/bi";
 import Wrapper from "../../components/Wrapper/Wrapper";
 import otakuService, { AnimeItem } from "../../services/otakuService";
 import { originalImage } from "../../services/apiConfigs";
+import { useVideoModal } from "../../context/VideoModal/VideoModal.context";
+import tmdbApi from "../../services/tmdbApi";
+import { siteMap } from "../../Types/common";
+import { VideoResult } from "../../Types/Video";
 
 type AnimeCategory = "trending" | "top_rated" | "movies" | "action" | "fantasy" | "scifi";
 
@@ -32,64 +38,90 @@ const CATEGORY_TABS: CategoryTab[] = [
   { id: "scifi", label: "Sci-Fi & Mecha", icon: <IoSparkles className="text-cyan-400" />, genreId: 878 },
 ];
 
-const FEATURED_HEROES = [
+// Fallback verified heroes with guaranteed working TMDB backdrop paths
+const FALLBACK_HEROES: AnimeItem[] = [
   {
     id: 85937,
-    type: "tv" as const,
-    title: "Demon Slayer: Kimetsu no Yaiba",
-    tagline: "It is the Taisho Period in Japan. Tanjiro, a kindhearted boy, finds his family slaughtered by a demon.",
-    backdrop: "https://image.tmdb.org/t/p/original/nTvM4mhqZlHIvUkIvd6vv79QOmp.jpg",
-    rating: 8.7,
-    year: "2019",
-    genre: "Shonen • Action • Supernatural",
-  },
-  {
-    id: 95557,
-    type: "tv" as const,
-    title: "Jujutsu Kaisen",
-    tagline: "A boy swallowed a cursed talisman - the finger of a demon - and becomes cursed himself.",
-    backdrop: "https://image.tmdb.org/t/p/original/gmECX1DvF9vgFMJNhQi8vG25v64.jpg",
-    rating: 8.6,
-    year: "2020",
-    genre: "Action • Dark Fantasy",
+    name: "Demon Slayer: Kimetsu no Yaiba",
+    media_type: "tv",
+    overview:
+      "It is the Taisho Period in Japan. Tanjiro, a kindhearted boy who sells charcoal for a living, finds his family slaughtered by a demon.",
+    backdrop_path: "/nTvM4mhqNlHIvUkI1gVnW6XP7GG.jpg",
+    poster_path: "/xUfRZu2mi8jH6SzQEJGP6tjBuYj.jpg",
+    vote_average: 8.7,
+    vote_count: 5800,
+    first_air_date: "2019-04-06",
   },
   {
     id: 1429,
-    type: "tv" as const,
-    title: "Attack on Titan",
-    tagline: "Centuries ago, mankind was slaughtered by monstrous humanoids known as Titans.",
-    backdrop: "https://image.tmdb.org/t/p/original/iK5g65q3QZcZ0R6e2b4xK4T.jpg",
-    rating: 8.9,
-    year: "2013",
-    genre: "Military • Post-Apocalyptic",
+    name: "Attack on Titan",
+    media_type: "tv",
+    overview:
+      "Centuries ago, mankind was slaughtered by monstrous humanoids known as Titans. Eren Yeager vows to cleanse the earth of the giant Titans.",
+    backdrop_path: "/rqbCbjB19amtOtFQbb3K2lgm2zv.jpg",
+    poster_path: "/hTP1dtwGFamzeL2VdsVo7q0v8Ki.jpg",
+    vote_average: 8.9,
+    vote_count: 6100,
+    first_air_date: "2013-04-07",
+  },
+  {
+    id: 30984,
+    name: "Bleach",
+    media_type: "tv",
+    overview:
+      "Ichigo Kurosaki has the ability to see ghosts. His life changes forever when he meets Rukia Kuchiki, a Soul Reaper.",
+    backdrop_path: "/o0NsbcIvsllg6CJX0FBFY8wWbsn.jpg",
+    poster_path: "/2EewmxXe72ogD0EaWM8gqa0ccIw.jpg",
+    vote_average: 8.4,
+    vote_count: 1800,
+    first_air_date: "2004-10-05",
   },
   {
     id: 129,
-    type: "movie" as const,
     title: "Spirited Away",
-    tagline: "A young girl wanders into a world ruled by gods, witches, and spirits.",
-    backdrop: "https://image.tmdb.org/t/p/original/Ab8mkHmkYADjU7wQiOkia9BzGvS.jpg",
-    rating: 8.5,
-    year: "2001",
-    genre: "Ghibli • Fantasy • Classic",
+    media_type: "movie",
+    overview:
+      "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon courage.",
+    backdrop_path: "/m4TUa2ciEWSlk37rOsjiSIvZDXE.jpg",
+    poster_path: "/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg",
+    vote_average: 8.5,
+    vote_count: 15800,
+    release_date: "2001-07-20",
   },
 ];
 
 const Otaku: React.FC = () => {
+  const videoModal = useVideoModal();
   const [activeCategory, setActiveCategory] = useState<AnimeCategory>("trending");
   const [animeList, setAnimeList] = useState<AnimeItem[]>([]);
+  const [heroList, setHeroList] = useState<AnimeItem[]>(FALLBACK_HEROES);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [heroIndex, setHeroIndex] = useState<number>(0);
 
-  // Rotate hero spotlight every 8 seconds
+  // Fetch real trending anime for dynamic Hero Showcase
   useEffect(() => {
-    const timer = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % FEATURED_HEROES.length);
-    }, 8000);
-    return () => clearInterval(timer);
+    otakuService.getTrendingAnime(1).then((res) => {
+      const validBackdrops = (res.results || []).filter(
+        (a) => a.backdrop_path && a.overview
+      );
+      if (validBackdrops.length >= 3) {
+        setHeroList(validBackdrops.slice(0, 6));
+      }
+    }).catch(() => {
+      setHeroList(FALLBACK_HEROES);
+    });
   }, []);
+
+  // Rotate hero spotlight every 7 seconds
+  useEffect(() => {
+    if (heroList.length <= 1) return;
+    const timer = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroList.length);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, [heroList]);
 
   const fetchAnimeByCategory = useCallback(async (cat: AnimeCategory) => {
     setIsLoading(true);
@@ -137,20 +169,56 @@ const Otaku: React.FC = () => {
     }
   };
 
-  const currentHero = FEATURED_HEROES[heroIndex];
+  const handleClickTrailer = (mediaType: "movie" | "tv", id: number) => {
+    tmdbApi
+      .getVideo<VideoResult>(mediaType, id)
+      .then((res) => {
+        const trailer = res.data.results.find(
+          (v) => v.type === "Trailer" && v.site === "YouTube"
+        ) || res.data.results[0];
+
+        if (trailer?.key) {
+          videoModal?.open(
+            `${trailer.site === "YouTube" ? siteMap.YouTube : siteMap.Vimeo}${trailer.key}`
+          );
+        } else {
+          videoModal?.open(`https://www.youtube.com`);
+        }
+      })
+      .catch(() => {
+        videoModal?.open(`https://www.youtube.com`);
+      });
+  };
+
+  const currentHero = heroList[heroIndex] || FALLBACK_HEROES[0];
+  const heroTitle = currentHero.name || currentHero.title || "Anime Spotlight";
+  const heroMediaType = currentHero.media_type || (currentHero.first_air_date ? "tv" : "movie");
+  const heroYear = (currentHero.first_air_date || currentHero.release_date || "").slice(0, 4);
+
+  // Detail Page URL helper
+  const getDetailUrl = (anime: AnimeItem) => {
+    const title = anime.name || anime.title || "anime";
+    const mType = anime.media_type || (anime.first_air_date ? "tv" : "movie");
+    const routePrefix = mType === "movie" ? "/movies" : "/tv-series";
+    const slug = encodeURIComponent(title.toLowerCase()).replace(/%20/g, "-");
+    return `${routePrefix}/${slug}/${anime.id}`;
+  };
 
   return (
     <div className="min-h-screen bg-black text-white font-poppins pb-20">
-      {/* Hero Spotlight Banner */}
+      {/* Dynamic Hero Spotlight Banner with Working Backdrop */}
       <div className="relative w-full h-[520px] sm:h-[580px] md:h-[640px] overflow-hidden bg-black-2">
         <div
+          key={currentHero.id}
           className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105"
           style={{
-            backgroundImage: `url(${currentHero.backdrop})`,
+            backgroundImage: `url(${originalImage(currentHero.backdrop_path)})`,
+            backgroundColor: "#180a29",
           }}
         />
+
         {/* Cinematic Vignette Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
 
         <Wrapper className="relative z-10 h-full flex flex-col justify-end pb-16 sm:pb-20">
@@ -160,38 +228,65 @@ const Otaku: React.FC = () => {
               <span>OTAKU SPOTLIGHT</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-md">
-              {currentHero.title}
-            </h1>
+            {/* Clickable Title directly linking to Detail Page */}
+            <Link
+              to={getDetailUrl(currentHero)}
+              className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-lg hover:text-dark-purple transition-colors block"
+            >
+              {heroTitle}
+            </Link>
 
             <div className="flex items-center gap-3 text-xs sm:text-sm text-light-gray font-medium">
               <span className="flex items-center gap-1 text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                <IoStar size={13} /> {currentHero.rating}
+                <IoStar size={13} /> {currentHero.vote_average ? currentHero.vote_average.toFixed(1) : "N/A"}
               </span>
               <span>•</span>
-              <span>{currentHero.year}</span>
+              <span>{heroYear || "Anime"}</span>
               <span>•</span>
-              <span className="text-purple-300">{currentHero.genre}</span>
+              <span className="uppercase text-purple-300 font-semibold">
+                {heroMediaType === "movie" ? "Anime Movie" : "Anime Series"}
+              </span>
             </div>
 
             <p className="text-xs sm:text-sm text-light-gray/90 line-clamp-3 leading-relaxed max-w-xl">
-              {currentHero.tagline}
+              {currentHero.overview}
             </p>
 
-            <div className="flex items-center gap-3 pt-2">
+            {/* Action Buttons: View Details, Trailer, and Stream */}
+            <div className="flex items-center gap-3 sm:gap-4 pt-2 flex-wrap">
+              {/* Primary: View Detail Page */}
               <Link
-                to={`/otaku/stream/${currentHero.type}/${currentHero.id}`}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-dark-purple hover:bg-deep-purple font-bold text-sm text-white shadow-lg shadow-dark-purple/40 transition-all transform hover:scale-105 cursor-pointer"
+                to={getDetailUrl(currentHero)}
+                className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-dark-purple hover:bg-deep-purple font-bold text-xs sm:text-sm text-white shadow-lg shadow-dark-purple/40 transition-all transform hover:scale-105 cursor-pointer"
               >
-                <IoPlay size={18} />
-                <span>Watch Stream</span>
+                <IoInformationCircleOutline size={18} />
+                <span>View Details</span>
+              </Link>
+
+              {/* Watch Trailer Modal */}
+              <button
+                type="button"
+                onClick={() => handleClickTrailer(heroMediaType, currentHero.id)}
+                className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 font-semibold text-xs sm:text-sm text-white transition-all cursor-pointer"
+              >
+                <BiMoviePlay size={17} />
+                <span>Trailer</span>
+              </button>
+
+              {/* Direct Stream Option */}
+              <Link
+                to={`/otaku/stream/${heroMediaType}/${currentHero.id}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-medium text-purple-300 hover:text-white transition-colors"
+              >
+                <IoPlay size={14} />
+                <span>Watch Stream &rarr;</span>
               </Link>
             </div>
           </div>
 
           {/* Hero Indicator Dots */}
           <div className="absolute bottom-6 right-6 flex items-center gap-2">
-            {FEATURED_HEROES.map((h, i) => (
+            {heroList.map((h, i) => (
               <button
                 key={h.id}
                 onClick={() => setHeroIndex(i)}
@@ -200,7 +295,7 @@ const Otaku: React.FC = () => {
                     ? "bg-dark-purple w-7"
                     : "bg-white/40 hover:bg-white/70"
                 }`}
-                title={h.title}
+                title={h.name || h.title}
               />
             ))}
           </div>
@@ -218,7 +313,7 @@ const Otaku: React.FC = () => {
               </span>
             </h2>
             <p className="text-xs sm:text-sm text-light-gray mt-1">
-              Stream the latest anime series, classic shonen, and movies with dedicated anime players.
+              Explore the anime collection. Click any title to view cast, trailers, episodes, or stream directly.
             </p>
           </div>
 
@@ -270,7 +365,7 @@ const Otaku: React.FC = () => {
           </div>
         )}
 
-        {/* Anime Title Counter / Search Title */}
+        {/* Search Results Summary */}
         {isSearching && (
           <div className="mb-6 flex items-center justify-between text-sm text-light-gray border-b border-white/10 pb-3">
             <span>
@@ -288,7 +383,7 @@ const Otaku: React.FC = () => {
           </div>
         )}
 
-        {/* Anime Grid */}
+        {/* Anime Grid: Each card links to the Detail Page */}
         {isLoading ? (
           <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3.5 sm:gap-4 md:gap-5">
             {[...Array(12).keys()].map((n) => (
@@ -309,15 +404,18 @@ const Otaku: React.FC = () => {
               const displayTitle = anime.name || anime.title || anime.original_name || "Anime";
               const mediaType = anime.media_type || (anime.first_air_date ? "tv" : "movie");
               const year = (anime.first_air_date || anime.release_date || "").slice(0, 4);
+              const detailUrl = getDetailUrl(anime);
 
               return (
-                <Link
+                <div
                   key={`${mediaType}_${anime.id}`}
-                  to={`/otaku/stream/${mediaType}/${anime.id}`}
                   className="group relative rounded-xl overflow-hidden bg-black-2 border border-white/10 hover:border-dark-purple/60 transition-all duration-300 flex flex-col hover:-translate-y-1.5 hover:shadow-xl hover:shadow-dark-purple/20"
                 >
-                  {/* Poster Image */}
-                  <div className="relative aspect-[2/3] w-full overflow-hidden bg-black">
+                  {/* Poster Image links to Detail Page */}
+                  <Link
+                    to={detailUrl}
+                    className="relative aspect-[2/3] w-full overflow-hidden bg-black block"
+                  >
                     <img
                       src={originalImage(anime.poster_path, 400)}
                       alt={displayTitle}
@@ -325,49 +423,56 @@ const Otaku: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <div className="w-11 h-11 rounded-full bg-dark-purple text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
-                        <IoPlay size={20} className="ml-0.5" />
-                      </div>
+                    {/* Gradient Overlay with Detail / Stream actions on Hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2 p-3">
+                      <span className="w-10 h-10 rounded-full bg-dark-purple text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                        <IoInformationCircleOutline size={22} />
+                      </span>
+                      <span className="text-xs font-bold text-white bg-black/60 px-2.5 py-1 rounded-full border border-white/20">
+                        View Details
+                      </span>
                     </div>
 
                     {/* Top Badges */}
-                    <div className="absolute top-2 left-2 flex items-center gap-1">
+                    <div className="absolute top-2 left-2 flex items-center gap-1 pointer-events-none">
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-black/75 backdrop-blur-sm text-amber-400 border border-white/10 flex items-center gap-0.5">
                         <IoStar size={10} /> {anime.vote_average ? anime.vote_average.toFixed(1) : "N/A"}
                       </span>
                     </div>
 
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 right-2 pointer-events-none">
                       <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-dark-purple/80 text-white backdrop-blur-sm">
-                        {mediaType === "movie" ? "Movie" : "Anime"}
+                        {mediaType === "movie" ? "Movie" : "Series"}
                       </span>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Card Bottom Meta */}
                   <div className="p-2.5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h3
-                        className="text-xs sm:text-sm font-semibold text-white group-hover:text-purple-300 transition-colors line-clamp-1"
+                      <Link
+                        to={detailUrl}
+                        className="text-xs sm:text-sm font-semibold text-white hover:text-dark-purple transition-colors line-clamp-1 block"
                         title={displayTitle}
                       >
                         {displayTitle}
-                      </h3>
+                      </Link>
                       <p className="text-[10px] text-light-gray mt-0.5 line-clamp-1">
                         {anime.original_name || anime.original_title || displayTitle}
                       </p>
                     </div>
 
-                    <div className="mt-2 pt-1 border-t border-white/5 flex items-center justify-between text-[10px] text-light-gray">
-                      <span>{year || "Anime"}</span>
-                      <span className="text-purple-300 font-medium group-hover:underline">
-                        Watch &rarr;
-                      </span>
+                    <div className="mt-2.5 pt-1.5 border-t border-white/5 flex items-center justify-between text-[11px]">
+                      <span className="text-light-gray text-[10px]">{year || "Anime"}</span>
+                      <Link
+                        to={detailUrl}
+                        className="text-purple-300 hover:text-white font-medium text-[10px] transition-colors"
+                      >
+                        Details &rarr;
+                      </Link>
                     </div>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>

@@ -38,6 +38,7 @@ const Streaming: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedSeason, setSelectedSeason] = useState<string>(season || '1');
   const [selectedEpisode, setSelectedEpisode] = useState<string>(episode || '1');
+  const [currentStreamServer, setCurrentStreamServer] = useState<number>(1);
   const [partySession, setPartySession] = useState<WatchPartySession | null>(null);
 
   // User name entry states
@@ -92,17 +93,39 @@ const Streaming: React.FC = () => {
     fetchContent();
   }, [fetchContent]);
 
+  const getStreamSrc = useCallback(
+    (serverNum: number, sNum: string, epNum: string) => {
+      if (!id) return '';
+      if (serverNum === 1) {
+        // Stream 1: EmbedWave
+        return type === 'movie'
+          ? `https://embedwave.cc/embed/movie/${id}`
+          : `https://embedwave.cc/embed/tv/${id}/${sNum}/${epNum}`;
+      } else if (serverNum === 2) {
+        // Stream 2: VidSrc v2 (High reliability for animation & shows)
+        return type === 'movie'
+          ? `https://vidsrc.cc/v2/embed/movie/${id}`
+          : `https://vidsrc.cc/v2/embed/tv/${id}/${sNum}/${epNum}`;
+      } else if (serverNum === 3) {
+        // Stream 3: MultiEmbed
+        return type === 'movie'
+          ? `https://multiembed.mov/?video_id=${id}`
+          : `https://multiembed.mov/?video_id=${id}&s=${sNum}&e=${epNum}`;
+      } else {
+        // Stream 4: VidSrc xyz
+        return type === 'movie'
+          ? `https://vidsrc.xyz/embed/movie/${id}`
+          : `https://vidsrc.xyz/embed/tv/${id}/${sNum}/${epNum}`;
+      }
+    },
+    [id, type]
+  );
+
   useEffect(() => {
     if (!id) return;
     setIsLoading(true);
-    if (type === 'movie') {
-      setSrc(`https://embedwave.cc/embed/movie/${id}`);
-    } else {
-      setSrc(
-        `https://embedwave.cc/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`
-      );
-    }
-  }, [type, id, selectedSeason, selectedEpisode]);
+    setSrc(getStreamSrc(currentStreamServer, selectedSeason, selectedEpisode));
+  }, [id, selectedSeason, selectedEpisode, currentStreamServer, getStreamSrc]);
 
   const handleSeasonChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSeason = e.target.value;
@@ -144,13 +167,7 @@ const Streaming: React.FC = () => {
     setIsLoading(true);
     setSrc('');
     setTimeout(() => {
-      if (type === 'movie') {
-        setSrc(`https://embedwave.cc/embed/movie/${id}`);
-      } else {
-        setSrc(
-          `https://embedwave.cc/embed/tv/${id}/${selectedSeason}/${selectedEpisode}`
-        );
-      }
+      setSrc(getStreamSrc(currentStreamServer, selectedSeason, selectedEpisode));
     }, 50);
   };
 
@@ -295,14 +312,29 @@ const Streaming: React.FC = () => {
               )}
             </h1>
 
-            {/* Action Buttons: Stream & Watch Party */}
-            <div className="mb-6 flex flex-wrap items-center gap-3">
-              <button
-                onClick={handleReloadStream}
-                className="px-4 py-2 rounded transition text-sm sm:text-base bg-purple-600 hover:bg-purple-700 font-medium cursor-pointer"
-              >
-                Stream 1
-              </button>
+            {/* Action Buttons: Multi-Stream Servers & Watch Party */}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {[
+                  { num: 1, label: "Stream 1" },
+                  { num: 2, label: "Stream 2 (VidSrc)" },
+                  { num: 3, label: "Stream 3 (MultiEmbed)" },
+                  { num: 4, label: "Stream 4" },
+                ].map((srv) => (
+                  <button
+                    key={srv.num}
+                    type="button"
+                    onClick={() => setCurrentStreamServer(srv.num)}
+                    className={`px-3.5 py-1.5 rounded-xl transition text-xs sm:text-sm font-semibold cursor-pointer border ${
+                      currentStreamServer === srv.num
+                        ? "bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-600/30"
+                        : "bg-white/10 hover:bg-white/15 text-light-gray border-white/10"
+                    }`}
+                  >
+                    {srv.label}
+                  </button>
+                ))}
+              </div>
 
               {!partyCode ? (
                 <button
