@@ -1,182 +1,239 @@
 import axios from "axios";
-import axiosInstance from "./axiosInstance";
-import { Paginate } from "../Types/common";
 
-export interface AnimeItem {
-  id: number;
-  name?: string;
-  title?: string;
-  original_name?: string;
-  original_title?: string;
-  overview: string;
-  poster_path: string;
-  backdrop_path: string;
-  vote_average: number;
-  vote_count: number;
-  first_air_date?: string;
-  release_date?: string;
-  media_type: "tv" | "movie";
-  genre_ids?: number[];
-  original_language?: string;
-  anilistId?: number;
-  totalEpisodes?: number;
+export interface AniListTitle {
+  english?: string;
+  romaji?: string;
+  native?: string;
 }
 
-export interface AniListMetadata {
+export interface AniListMedia {
   id: number;
-  idMal?: number;
-  title: {
-    romaji?: string;
-    english?: string;
-    native?: string;
+  title: AniListTitle;
+  coverImage: {
+    extraLarge?: string;
+    large?: string;
+    medium?: string;
   };
+  bannerImage?: string;
+  description?: string;
+  averageScore?: number;
   episodes?: number;
   format?: string;
   status?: string;
-  bannerImage?: string;
-  description?: string;
   genres?: string[];
-  averageScore?: number;
+  duration?: number;
+  seasonYear?: number;
+  trailer?: {
+    id?: string;
+    site?: string;
+  };
+  studios?: {
+    nodes: Array<{ name: string }>;
+  };
+  characters?: {
+    edges: Array<{
+      role: string;
+      node: {
+        id: number;
+        name: { full: string };
+        image?: { medium: string };
+      };
+      voiceActors?: Array<{
+        name: { full: string };
+        image?: { medium: string };
+      }>;
+    }>;
+  };
+  recommendations?: {
+    nodes: Array<{
+      mediaRecommendation?: {
+        id: number;
+        title: AniListTitle;
+        coverImage?: { large: string };
+        averageScore?: number;
+        format?: string;
+      };
+    }>;
+  };
+}
+
+const ANILIST_API_URL = "https://graphql.anilist.co";
+
+const LIST_QUERY = `
+query ($page: Int, $perPage: Int, $sort: [MediaSort], $genre: String, $format: MediaFormat, $search: String) {
+  Page(page: $page, perPage: $perPage) {
+    media(type: ANIME, sort: $sort, genre: $genre, format: $format, search: $search, isAdult: false) {
+      id
+      title {
+        english
+        romaji
+        native
+      }
+      coverImage {
+        extraLarge
+        large
+        medium
+      }
+      bannerImage
+      averageScore
+      episodes
+      format
+      status
+      genres
+      seasonYear
+      description(asHtml: false)
+    }
+  }
+}
+`;
+
+const DETAIL_QUERY = `
+query ($id: Int) {
+  Media(id: $id, type: ANIME) {
+    id
+    title {
+      english
+      romaji
+      native
+    }
+    coverImage {
+      extraLarge
+      large
+      medium
+    }
+    bannerImage
+    description(asHtml: false)
+    averageScore
+    episodes
+    format
+    status
+    genres
+    duration
+    seasonYear
+    trailer {
+      id
+      site
+    }
+    studios(isMain: true) {
+      nodes {
+        name
+      }
+    }
+    characters(sort: ROLE, perPage: 8) {
+      edges {
+        role
+        node {
+          id
+          name {
+            full
+          }
+          image {
+            medium
+          }
+        }
+        voiceActors(language: JAPANESE) {
+          name {
+            full
+          }
+          image {
+            medium
+          }
+        }
+      }
+    }
+    recommendations(perPage: 10) {
+      nodes {
+        mediaRecommendation {
+          id
+          title {
+            english
+            romaji
+          }
+          coverImage {
+            large
+          }
+          averageScore
+          format
+        }
+      }
+    }
+  }
+}
+`;
+
+async function fetchFromAniList<T>(query: string, variables: any): Promise<T> {
+  const res = await axios.post(
+    ANILIST_API_URL,
+    { query, variables },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      timeout: 10000,
+    }
+  );
+  return res.data?.data;
 }
 
 const otakuService = {
-  // Fetch Trending / Popular Anime Series
-  getTrendingAnime: async (page = 1) => {
-    const res = await axiosInstance.get<Paginate<AnimeItem>>("discover/tv", {
-      params: {
-        with_genres: "16",
-        with_original_language: "ja",
-        sort_by: "popularity.desc",
-        page,
-      },
+  // 1. Trending Airing Anime
+  getTrendingAnime: async (page = 1, perPage = 18): Promise<AniListMedia[]> => {
+    const data = await fetchFromAniList<{ Page: { media: AniListMedia[] } }>(LIST_QUERY, {
+      page,
+      perPage,
+      sort: ["TRENDING_DESC"],
     });
-    return {
-      ...res.data,
-      results: res.data.results.map((r) => ({ ...r, media_type: "tv" as const })),
-    };
+    return data?.Page?.media || [];
   },
 
-  // Fetch Top Rated Anime of All Time
-  getTopRatedAnime: async (page = 1) => {
-    const res = await axiosInstance.get<Paginate<AnimeItem>>("discover/tv", {
-      params: {
-        with_genres: "16",
-        with_original_language: "ja",
-        "vote_count.gte": 250,
-        sort_by: "vote_average.desc",
-        page,
-      },
+  // 2. Top Rated Anime of All Time
+  getTopRatedAnime: async (page = 1, perPage = 18): Promise<AniListMedia[]> => {
+    const data = await fetchFromAniList<{ Page: { media: AniListMedia[] } }>(LIST_QUERY, {
+      page,
+      perPage,
+      sort: ["SCORE_DESC"],
     });
-    return {
-      ...res.data,
-      results: res.data.results.map((r) => ({ ...r, media_type: "tv" as const })),
-    };
+    return data?.Page?.media || [];
   },
 
-  // Fetch Popular Anime Movies
-  getAnimeMovies: async (page = 1) => {
-    const res = await axiosInstance.get<Paginate<AnimeItem>>("discover/movie", {
-      params: {
-        with_genres: "16",
-        with_original_language: "ja",
-        sort_by: "popularity.desc",
-        page,
-      },
+  // 3. Anime Movies
+  getAnimeMovies: async (page = 1, perPage = 18): Promise<AniListMedia[]> => {
+    const data = await fetchFromAniList<{ Page: { media: AniListMedia[] } }>(LIST_QUERY, {
+      page,
+      perPage,
+      format: "MOVIE",
+      sort: ["POPULARITY_DESC"],
     });
-    return {
-      ...res.data,
-      results: res.data.results.map((r) => ({ ...r, media_type: "movie" as const })),
-    };
+    return data?.Page?.media || [];
   },
 
-  // Fetch Anime by Specific Subgenre (e.g. Action=28, Adventure=12, Fantasy=14, Sci-Fi=878)
-  getAnimeByGenre: async (genreId: number, page = 1) => {
-    const res = await axiosInstance.get<Paginate<AnimeItem>>("discover/tv", {
-      params: {
-        with_genres: `16,${genreId}`,
-        with_original_language: "ja",
-        sort_by: "popularity.desc",
-        page,
-      },
+  // 4. Anime by Genre (e.g. "Action", "Fantasy", "Sci-Fi", "Romance", "Comedy")
+  getAnimeByGenre: async (genre: string, page = 1, perPage = 18): Promise<AniListMedia[]> => {
+    const data = await fetchFromAniList<{ Page: { media: AniListMedia[] } }>(LIST_QUERY, {
+      page,
+      perPage,
+      genre,
+      sort: ["POPULARITY_DESC"],
     });
-    return {
-      ...res.data,
-      results: res.data.results.map((r) => ({ ...r, media_type: "tv" as const })),
-    };
+    return data?.Page?.media || [];
   },
 
-  // Search Anime by Title
-  searchAnime: async (query: string, page = 1) => {
-    const [tvRes, movieRes] = await Promise.all([
-      axiosInstance.get<Paginate<AnimeItem>>("search/tv", {
-        params: { query, page },
-      }),
-      axiosInstance.get<Paginate<AnimeItem>>("search/movie", {
-        params: { query, page },
-      }),
-    ]);
-
-    // Filter to Japanese animation or keyword match
-    const tvAnime = (tvRes.data.results || [])
-      .filter((i) => i.original_language === "ja" || (i.genre_ids && i.genre_ids.includes(16)))
-      .map((i) => ({ ...i, media_type: "tv" as const }));
-
-    const movieAnime = (movieRes.data.results || [])
-      .filter((i) => i.original_language === "ja" || (i.genre_ids && i.genre_ids.includes(16)))
-      .map((i) => ({ ...i, media_type: "movie" as const }));
-
-    return [...tvAnime, ...movieAnime];
+  // 5. Search Anime by Name
+  searchAnime: async (search: string, page = 1, perPage = 18): Promise<AniListMedia[]> => {
+    const data = await fetchFromAniList<{ Page: { media: AniListMedia[] } }>(LIST_QUERY, {
+      page,
+      perPage,
+      search,
+      sort: ["SEARCH_MATCH"],
+    });
+    return data?.Page?.media || [];
   },
 
-  // Query AniList Public GraphQL API for exact AniList ID, total episodes, sub/dub mapping
-  getAniListMetadata: async (title: string): Promise<AniListMetadata | null> => {
-    try {
-      const cleanTitle = title
-        .replace(/Season \d+/i, "")
-        .replace(/\(TV\)/i, "")
-        .replace(/:/g, " ")
-        .trim();
-
-      const query = `
-        query ($search: String) {
-          Media(search: $search, type: ANIME, sort: SEARCH_MATCH) {
-            id
-            idMal
-            title {
-              romaji
-              english
-              native
-            }
-            episodes
-            format
-            status
-            bannerImage
-            description(asHtml: false)
-            genres
-            averageScore
-          }
-        }
-      `;
-
-      const res = await axios.post(
-        "https://graphql.anilist.co",
-        {
-          query,
-          variables: { search: cleanTitle },
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          timeout: 4000,
-        }
-      );
-
-      return res.data?.data?.Media || null;
-    } catch {
-      return null;
-    }
+  // 6. Get Full Anime Details (Characters, Studios, Recommendations, Trailer, etc.)
+  getAnimeDetail: async (id: number): Promise<AniListMedia | null> => {
+    const data = await fetchFromAniList<{ Media: AniListMedia }>(DETAIL_QUERY, { id });
+    return data?.Media || null;
   },
 };
 

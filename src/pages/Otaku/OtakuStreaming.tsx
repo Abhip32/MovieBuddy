@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
-import tmdbApi, { TmdbMediaType } from "../../services/tmdbApi";
-import otakuService, { AniListMetadata } from "../../services/otakuService";
-import { FaUsers, FaPlay, FaServer } from "react-icons/fa";
-import { IoStar, IoSparkles, IoVolumeHigh, IoLanguage } from "react-icons/io5";
+import { useParams, useSearchParams, Link } from "react-router-dom";
+import otakuService, { AniListMedia } from "../../services/otakuService";
+import { FaUsers, FaServer } from "react-icons/fa";
+import { IoStar, IoVolumeHigh, IoLanguage, IoArrowBack, IoInformationCircleOutline } from "react-icons/io5";
 import {
   WatchPartySession,
   generateRoomCode,
@@ -11,78 +10,43 @@ import {
 } from "../../services/watchPartyService";
 import { WatchPartyDock } from "../../components/WatchParty/WatchPartyDock";
 
-type StreamServer = "animeembed" | "vidsrc" | "embedwave" | "multiembed";
+type StreamServer = "animeembed" | "filmu";
 type AudioTrack = "sub" | "dub";
 
-interface ContentDetails {
-  name?: string;
-  title?: string;
-  original_name?: string;
-  original_title?: string;
-  overview?: string;
-  backdrop_path?: string;
-  poster_path?: string;
-  vote_average?: number;
-  number_of_seasons?: number;
-  number_of_episodes?: number;
-  genres?: Array<{ id: number; name: string }>;
-  seasons?: Array<{
-    season_number?: number;
-    episode_count: number;
-    name?: string;
-  }>;
-}
-
 const OtakuStreaming: React.FC = () => {
-  const { type, id } = useParams<{ type: string; id: string }>();
+  const { id } = useParams<{ id: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const partyCode = searchParams.get("party");
   const isHostParam = searchParams.get("host") === "true";
   const initialEpParam = searchParams.get("ep") || "1";
-  const initialSeasonParam = searchParams.get("season") || "1";
 
-  const [content, setContent] = useState<ContentDetails | null>(null);
-  const [aniListMeta, setAniListMeta] = useState<AniListMetadata | null>(null);
+  const [anime, setAnime] = useState<AniListMedia | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Playback States
   const [selectedServer, setSelectedServer] = useState<StreamServer>("animeembed");
   const [audioTrack, setAudioTrack] = useState<AudioTrack>("sub");
   const [currentEpisode, setCurrentEpisode] = useState<number>(parseInt(initialEpParam) || 1);
-  const [selectedSeason, setSelectedSeason] = useState<string>(initialSeasonParam);
   const [src, setSrc] = useState<string>("");
   const [episodeRangeIndex, setEpisodeRangeIndex] = useState<number>(0);
 
   // Watch Party session
   const [partySession, setPartySession] = useState<WatchPartySession | null>(null);
 
-  // Fetch TMDB and AniList details
+  // Fetch AniList Anime Detail
   const fetchAnimeData = useCallback(async () => {
-    if (!id || (type !== "movie" && type !== "tv")) return;
+    if (!id) return;
     setIsLoading(true);
     try {
-      const tmdbRes = await tmdbApi.getDetail<ContentDetails>(
-        type as TmdbMediaType,
-        parseInt(id)
-      );
-      setContent(tmdbRes.data);
-
-      const title =
-        tmdbRes.data.name ||
-        tmdbRes.data.title ||
-        tmdbRes.data.original_name ||
-        "";
-
-      // Fetch AniList metadata
-      const aniData = await otakuService.getAniListMetadata(title);
-      setAniListMeta(aniData);
+      const data = await otakuService.getAnimeDetail(parseInt(id));
+      setAnime(data);
     } catch {
       // Handle error gracefully
     } finally {
       setIsLoading(false);
     }
-  }, [type, id]);
+  }, [id]);
 
   useEffect(() => {
     fetchAnimeData();
@@ -107,70 +71,22 @@ const OtakuStreaming: React.FC = () => {
     };
   }, [partyCode, isHostParam]);
 
-  // Determine total episodes for linear selector
   const totalEpisodeCount = useMemo(() => {
-    if (type === "movie") return 1;
-    if (aniListMeta?.episodes && aniListMeta.episodes > 0) {
-      return aniListMeta.episodes;
-    }
-    if (content?.number_of_episodes && content.number_of_episodes > 0) {
-      return content.number_of_episodes;
-    }
-    // Sum of TMDB seasons episodes or default to 24
-    if (content?.seasons && content.seasons.length > 0) {
-      const sum = content.seasons.reduce((acc, s) => acc + (s.episode_count || 0), 0);
-      if (sum > 0) return sum;
-    }
-    return 24; // Fallback
-  }, [content, aniListMeta, type]);
+    if (anime?.format === "MOVIE") return 1;
+    return anime?.episodes || 12;
+  }, [anime]);
 
-  // Compute stream URL
+  // Compute stream URL directly using AniList ID
   useEffect(() => {
     if (!id) return;
     setIsLoading(true);
 
-    if (type === "movie") {
-      if (selectedServer === "animeembed" && aniListMeta?.id) {
-        setSrc(`https://www.animeembed.com/embed/ani/${aniListMeta.id}/1?track=${audioTrack}`);
-      } else if (selectedServer === "vidsrc") {
-        setSrc(`https://vidsrc.cc/v2/embed/movie/${id}`);
-      } else if (selectedServer === "embedwave") {
-        setSrc(`https://embedwave.cc/embed/movie/${id}`);
-      } else {
-        setSrc(`https://multiembed.mov/?video_id=${id}`);
-      }
+    if (selectedServer === "animeembed") {
+      setSrc(`https://www.animeembed.com/embed/ani/${id}/${currentEpisode}?track=${audioTrack}`);
     } else {
-      // TV Series / Anime Episodes
-      if (selectedServer === "animeembed") {
-        if (aniListMeta?.id) {
-          setSrc(
-            `https://www.animeembed.com/embed/ani/${aniListMeta.id}/${currentEpisode}?track=${audioTrack}`
-          );
-        } else {
-          // If AniList ID not ready, fallback to VidSrc with season/episode
-          setSrc(
-            `https://vidsrc.cc/v2/embed/tv/${id}/${selectedSeason}/${currentEpisode}`
-          );
-        }
-      } else if (selectedServer === "vidsrc") {
-        setSrc(`https://vidsrc.cc/v2/embed/tv/${id}/${selectedSeason}/${currentEpisode}`);
-      } else if (selectedServer === "embedwave") {
-        setSrc(`https://embedwave.cc/embed/tv/${id}/${selectedSeason}/${currentEpisode}`);
-      } else {
-        setSrc(
-          `https://multiembed.mov/?video_id=${id}&s=${selectedSeason}&e=${currentEpisode}`
-        );
-      }
+      setSrc(`https://embed.filmu.in/anime/${id}?ep=${currentEpisode}`);
     }
-  }, [
-    type,
-    id,
-    selectedServer,
-    audioTrack,
-    currentEpisode,
-    selectedSeason,
-    aniListMeta,
-  ]);
+  }, [id, selectedServer, audioTrack, currentEpisode]);
 
   const handleSelectEpisode = (ep: number) => {
     setCurrentEpisode(ep);
@@ -181,10 +97,9 @@ const OtakuStreaming: React.FC = () => {
     // Broadcast stream sync to Watch Party members if Host
     if (partySession && partySession.isHost) {
       partySession.syncStream({
-        mediaType: type as "movie" | "tv",
+        mediaType: "tv",
         contentId: id!,
-        contentTitle: content?.name || content?.title,
-        season: selectedSeason,
+        contentTitle: anime?.title.english || anime?.title.romaji,
         episode: String(ep),
         hostName: partySession.user.name,
         updatedAt: Date.now(),
@@ -212,10 +127,9 @@ const OtakuStreaming: React.FC = () => {
       const epNum = parseInt(sync.episode);
       if (!isNaN(epNum)) setCurrentEpisode(epNum);
     }
-    if (sync.season) setSelectedSeason(sync.season);
   };
 
-  // Group linear episodes in batches of 50 for large anime (e.g. One Piece, Naruto)
+  // Group linear episodes in batches of 50
   const episodeRanges = useMemo(() => {
     const ranges: { label: string; start: number; end: number }[] = [];
     const step = 50;
@@ -231,24 +145,26 @@ const OtakuStreaming: React.FC = () => {
     end: totalEpisodeCount,
   };
 
-  const animeTitle = content?.name || content?.title || "Anime Stream";
+  const animeTitle = anime?.title.english || anime?.title.romaji || "Otaku Anime Stream";
 
   useEffect(() => {
-    if (content) {
+    if (anime) {
       document.title = `${animeTitle} - Otaku Stream`;
     }
     return () => {
       document.title = "MovieBuddy";
     };
-  }, [content, animeTitle]);
+  }, [anime, animeTitle]);
 
-  if (!content) {
+  if (!anime) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-t-transparent border-dark-purple rounded-full animate-spin" />
       </div>
     );
   }
+
+  const isMovie = anime.format === "MOVIE";
 
   return (
     <div className="p-4 sm:p-6 md:p-10 min-h-screen bg-black text-white font-poppins">
@@ -264,41 +180,45 @@ const OtakuStreaming: React.FC = () => {
         >
           {/* Main Player Column */}
           <div className={partySession ? "lg:col-span-8 xl:col-span-8" : ""}>
-            {/* Anime Title Header */}
+            {/* Top Navigation & Title */}
             <div className="mb-4">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <Link
+                  to={`/otaku/detail/${id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
+                >
+                  <IoInformationCircleOutline size={14} />
+                  <span>View Details</span>
+                </Link>
+
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dark-purple/30 text-purple-300 border border-dark-purple/50 uppercase tracking-wider">
-                  Otaku Anime Stream
+                  AniList #{id}
                 </span>
-                {aniListMeta?.status && (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-light-gray font-medium">
-                    {aniListMeta.status}
-                  </span>
-                )}
-                {content.vote_average && (
+
+                {anime.averageScore && (
                   <span className="text-xs text-amber-400 font-bold flex items-center gap-1">
-                    <IoStar size={12} /> {content.vote_average.toFixed(1)}
+                    <IoStar size={12} /> {(anime.averageScore / 10).toFixed(1)}
                   </span>
                 )}
               </div>
 
               <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white flex flex-wrap items-center gap-2">
                 <span>{animeTitle}</span>
-                {type === "tv" && (
+                {!isMovie && (
                   <span className="text-base sm:text-lg font-normal text-purple-300">
                     – Episode {currentEpisode}
                   </span>
                 )}
               </h1>
 
-              {aniListMeta?.title?.romaji && aniListMeta.title.romaji !== animeTitle && (
+              {anime.title.romaji && anime.title.romaji !== animeTitle && (
                 <p className="text-xs text-light-gray/80 italic mt-0.5">
-                  {aniListMeta.title.romaji}
+                  {anime.title.romaji}
                 </p>
               )}
             </div>
 
-            {/* Server & Audio Controls Bar */}
+            {/* Server & Sub/Dub Audio Controls Bar */}
             <div className="mb-4 p-3 rounded-2xl bg-black-2 border border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-lg">
               {/* Server Selectors */}
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -318,36 +238,14 @@ const OtakuStreaming: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => setSelectedServer("vidsrc")}
+                  onClick={() => setSelectedServer("filmu")}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedServer === "vidsrc"
+                    selectedServer === "filmu"
                       ? "bg-dark-purple text-white border-dark-purple"
                       : "bg-white/5 hover:bg-white/10 text-light-gray border-white/10"
                   }`}
                 >
-                  Server 2 (VidSrc)
-                </button>
-
-                <button
-                  onClick={() => setSelectedServer("embedwave")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedServer === "embedwave"
-                      ? "bg-dark-purple text-white border-dark-purple"
-                      : "bg-white/5 hover:bg-white/10 text-light-gray border-white/10"
-                  }`}
-                >
-                  Server 3 (EmbedWave)
-                </button>
-
-                <button
-                  onClick={() => setSelectedServer("multiembed")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    selectedServer === "multiembed"
-                      ? "bg-dark-purple text-white border-dark-purple"
-                      : "bg-white/5 hover:bg-white/10 text-light-gray border-white/10"
-                  }`}
-                >
-                  Server 4 (MultiEmbed)
+                  Server 2 (FilmU)
                 </button>
               </div>
 
@@ -420,8 +318,8 @@ const OtakuStreaming: React.FC = () => {
               )}
             </div>
 
-            {/* Linear Episode Grid (for TV / Anime series) */}
-            {type === "tv" && (
+            {/* Linear Episode Grid (for Series) */}
+            {!isMovie && totalEpisodeCount > 1 && (
               <div className="p-4 sm:p-5 rounded-2xl bg-black-2 border border-white/10 mb-8 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
                   <div className="flex items-center gap-2">
@@ -485,20 +383,18 @@ const OtakuStreaming: React.FC = () => {
                 Synopsis
               </h3>
               <p className="text-xs sm:text-sm text-light-gray leading-relaxed">
-                {aniListMeta?.description ||
-                  content.overview ||
-                  "No synopsis available for this anime."}
+                {anime.description || "No synopsis available for this anime."}
               </p>
 
-              {content.genres && content.genres.length > 0 && (
+              {anime.genres && anime.genres.length > 0 && (
                 <div className="flex items-center gap-1.5 flex-wrap pt-2">
                   <span className="text-xs text-light-gray">Genres:</span>
-                  {content.genres.map((g) => (
+                  {anime.genres.map((g) => (
                     <span
-                      key={g.id}
+                      key={g}
                       className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[11px] text-purple-300 font-medium"
                     >
-                      {g.name}
+                      {g}
                     </span>
                   ))}
                 </div>

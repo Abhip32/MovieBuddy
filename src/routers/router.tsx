@@ -14,6 +14,7 @@ const Streaming = lazy(() => import("../pages/Streaming/Streaming"));
 const CineBot = lazy(() => import("../pages/CineBot/CineBot"));
 const WatchParty = lazy(() => import("../pages/WatchParty/WatchParty"));
 const Otaku = lazy(() => import("../pages/Otaku/Otaku"));
+const OtakuDetail = lazy(() => import("../pages/Otaku/OtakuDetail"));
 const OtakuStreaming = lazy(() => import("../pages/Otaku/OtakuStreaming"));
 
 const routeObj: RouteObject[] = [
@@ -50,6 +51,22 @@ const routeObj: RouteObject[] = [
         element: (
           <Suspense fallback={<Loader />}>
             <Otaku />
+          </Suspense>
+        )
+      },
+      {
+        path: "/otaku/detail/:id",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <OtakuDetail />
+          </Suspense>
+        )
+      },
+      {
+        path: "/otaku/stream/:id",
+        element: (
+          <Suspense fallback={<Loader />}>
+            <OtakuStreaming />
           </Suspense>
         )
       },
