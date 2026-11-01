@@ -48,14 +48,16 @@ const Otaku: React.FC = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [heroIndex, setHeroIndex] = useState<number>(0);
 
-  // Fetch initial trending anime for the Hero Spotlight Carousel
+  // Fetch initial trending anime for the Hero Spotlight Carousel (prioritizing wide horizontal banners)
   useEffect(() => {
     otakuService
-      .getTrendingAnime(1, 10)
+      .getTrendingAnime(1, 15)
       .then((res) => {
-        const withBanners = res.filter((a) => a.bannerImage || a.coverImage?.extraLarge);
-        if (withBanners.length > 0) {
-          setHeroList(withBanners.slice(0, 5));
+        const withBanners = res.filter((a) => a.bannerImage && a.bannerImage.trim().length > 0);
+        if (withBanners.length >= 3) {
+          setHeroList(withBanners.slice(0, 6));
+        } else {
+          setHeroList(res.filter((a) => a.bannerImage || a.coverImage?.extraLarge).slice(0, 5));
         }
       })
       .catch(() => {});
@@ -132,34 +134,34 @@ const Otaku: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white font-poppins pb-20">
       {/* Dynamic AniList Hero Spotlight Banner */}
-      <div className="relative w-full h-[520px] sm:h-[580px] md:h-[640px] overflow-hidden bg-black-2">
+      <div className="relative w-full min-h-[520px] sm:min-h-[580px] md:min-h-[640px] overflow-hidden bg-black">
         {heroBg && (
           <div
             key={currentHero?.id}
-            className="absolute inset-0 bg-cover bg-center transition-all duration-1000 transform scale-105"
+            className="absolute inset-0 bg-cover bg-center transition-all duration-700"
             style={{
               backgroundImage: `url(${heroBg})`,
-              filter: "brightness(0.65)",
             }}
           />
         )}
 
-        {/* Ambient Dark Purple Lighting */}
+        {/* Natural Vignette Overlays - Vibrant & Clear, NOT pitch black */}
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent w-full md:w-3/5" />
 
-        <Wrapper className="relative z-[2] h-full flex flex-col justify-end pb-16 sm:pb-20 pointer-events-none">
+        <Wrapper className="relative z-[2] min-h-[520px] sm:min-h-[580px] md:min-h-[640px] flex flex-col justify-end pt-28 sm:pt-36 pb-14 sm:pb-16 pointer-events-none">
           {currentHero && (
-            <div className="max-w-2xl space-y-3.5 animate-fadeIn pointer-events-auto">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-purple/30 border border-dark-purple/50 text-xs text-purple-300 font-semibold tracking-wide backdrop-blur-md">
-                <span className="w-2 h-2 rounded-full bg-dark-purple animate-pulse" />
+            <div className="max-w-xl md:max-w-2xl space-y-3 animate-fadeIn pointer-events-auto">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-dark-purple/40 border border-dark-purple/60 text-xs text-purple-200 font-semibold tracking-wide backdrop-blur-md shadow-md">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
                 <span>OTAKU SPOTLIGHT</span>
               </div>
 
-              {/* Title links to Detail Page */}
+              {/* Title links to Detail Page - Clamped to 2 lines max with drop shadow */}
               <Link
                 to={`/otaku/detail/${currentHero.id}`}
-                className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-lg hover:text-dark-purple transition-colors block"
+                title={heroTitle}
+                className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-[0_4px_14px_rgba(0,0,0,0.95)] hover:text-dark-purple transition-colors block line-clamp-2"
               >
                 {heroTitle}
               </Link>

@@ -89,10 +89,10 @@ const OtakuDetail: React.FC = () => {
           backgroundImage: bannerBg ? `url(${bannerBg})` : undefined,
         }}
       >
-        {/* Layered Cinematic Overlays for contrast and legibility */}
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-[2px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/50 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-transparent pointer-events-none" />
+        {/* Layered Cinematic Overlays: smooth & vivid */}
+        <div className="absolute inset-0 bg-black/55 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/40 to-transparent pointer-events-none" />
 
         <Wrapper className="relative z-10">
           {/* Back to Otaku Hub Button */}
